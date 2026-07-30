@@ -31,7 +31,7 @@ export function UploadStep({ onUploaded, onReset, previewUrl }: UploadStepProps)
       return;
     }
     if (file.size > MAX_UPLOAD_SIZE_BYTES) {
-      setError("Fichier trop volumineux (200 Mo maximum).");
+      setError("Fichier trop volumineux (16 Mo maximum pour le moment).");
       return;
     }
 
@@ -112,7 +112,8 @@ export function UploadStep({ onUploaded, onReset, previewUrl }: UploadStepProps)
         <div>
           <p className="font-medium">Glissez-déposez votre vidéo</p>
           <p className="text-sm text-muted-foreground">
-            MP4, MOV ou WEBM — 200 Mo maximum
+            MP4, MOV ou WEBM — 16 Mo maximum. Seules les 5 premières secondes
+            seront utilisées.
           </p>
         </div>
         <Button

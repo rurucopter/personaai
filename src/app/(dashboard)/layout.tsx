@@ -1,5 +1,5 @@
-import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { requireOwner } from "@/lib/auth/require-owner";
 import { DashboardSidebar } from "@/components/dashboard/sidebar";
 import { DashboardTopbar } from "@/components/dashboard/topbar";
 import type { CreditsRow, UserRow } from "@/types/database";
@@ -9,12 +9,8 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const user = await requireOwner();
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) redirect("/login");
 
   const [{ data: profile }, { data: credits }] = await Promise.all([
     supabase.from("users").select("*").eq("id", user.id).single<UserRow>(),
