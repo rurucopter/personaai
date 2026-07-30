@@ -15,12 +15,21 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"),
   title: {
     default: "PersonaAI — Transformez-vous en n'importe quel personnage",
     template: "%s · PersonaAI",
   },
   description:
     "Importez une vidéo de vous-même et transformez votre apparence, votre style et votre énergie grâce à l'IA, tout en conservant votre identité.",
+  openGraph: {
+    type: "website",
+    locale: "fr_FR",
+    siteName: "PersonaAI",
+  },
+  twitter: {
+    card: "summary_large_image",
+  },
 };
 
 export default function RootLayout({

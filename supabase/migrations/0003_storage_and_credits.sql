@@ -1,10 +1,10 @@
 -- Storage buckets for source uploads and generated results, plus an
 -- atomic credit-spend function to avoid race conditions on the balance.
 
-insert into storage.buckets (id, name, public)
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 values
-  ('source-videos', 'source-videos', false),
-  ('result-videos', 'result-videos', false)
+  ('source-videos', 'source-videos', false, 209715200, array['video/mp4', 'video/quicktime', 'video/webm']),
+  ('result-videos', 'result-videos', false, 209715200, array['video/mp4', 'video/quicktime', 'video/webm'])
 on conflict (id) do nothing;
 
 -- Users can only read/write objects under a path prefixed with their own uid,
