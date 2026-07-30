@@ -32,7 +32,7 @@ export default async function VideosPage() {
             Retrouvez toutes vos transformations générées.
           </p>
         </div>
-        <Button render={<Link href="/dashboard/create" />} className="gap-2">
+        <Button render={<Link href="/dashboard/create" />} nativeButton={false} className="gap-2">
           <Sparkles className="size-4" />
           Nouvelle transformation
         </Button>

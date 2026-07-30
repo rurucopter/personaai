@@ -21,7 +21,7 @@ export default function DashboardHomePage() {
           <p className="text-sm text-muted-foreground">
             Importez une vidéo et transformez-la en quelques minutes.
           </p>
-          <Button render={<Link href="/dashboard/create" />} className="gap-2">
+          <Button render={<Link href="/dashboard/create" />} nativeButton={false} className="gap-2">
             <Sparkles className="size-4" />
             Créer une transformation
           </Button>

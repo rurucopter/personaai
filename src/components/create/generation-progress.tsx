@@ -28,7 +28,9 @@ export function GenerationProgress({ initialVideo }: { initialVideo: VideoRow })
             Retrouvez-la dans « Mes vidéos ».
           </p>
         </div>
-        <Button render={<Link href="/dashboard/videos" />}>Voir mes vidéos</Button>
+        <Button render={<Link href="/dashboard/videos" />} nativeButton={false}>
+          Voir mes vidéos
+        </Button>
       </div>
     );
   }
