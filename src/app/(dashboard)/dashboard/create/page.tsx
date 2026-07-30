@@ -1,6 +1,19 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { createClient } from "@/lib/supabase/server";
+import { CreationWizard } from "@/components/create/creation-wizard";
+import type { CreditsRow } from "@/types/database";
 
-export default function CreateTransformationPage() {
+export default async function CreateTransformationPage() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const { data: credits } = await supabase
+    .from("credits")
+    .select("*")
+    .eq("user_id", user!.id)
+    .single<CreditsRow>();
+
   return (
     <div className="flex flex-col gap-6">
       <div>
@@ -12,15 +25,7 @@ export default function CreateTransformationPage() {
         </p>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Bientôt disponible</CardTitle>
-        </CardHeader>
-        <CardContent className="text-sm text-muted-foreground">
-          Le flux de création (upload, sélection de persona, réglages, génération
-          avec suivi de progression) est prévu pour la prochaine phase.
-        </CardContent>
-      </Card>
+      <CreationWizard creditBalance={credits?.balance ?? 0} />
     </div>
   );
 }
