@@ -27,3 +27,22 @@ export async function updateProfile(
   revalidatePath("/dashboard/settings");
   return {};
 }
+
+export async function updateAvatarUrl(avatarUrl: string): Promise<AuthActionResult> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) return { error: "Non authentifié." };
+
+  const { error } = await supabase
+    .from("users")
+    .update({ avatar_url: avatarUrl, updated_at: new Date().toISOString() })
+    .eq("id", user.id);
+
+  if (error) return { error: error.message };
+
+  revalidatePath("/dashboard/settings");
+  return {};
+}

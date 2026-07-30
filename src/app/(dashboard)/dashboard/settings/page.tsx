@@ -1,5 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
+import { AvatarUpload } from "@/components/dashboard/avatar-upload";
 import { ProfileForm } from "@/components/dashboard/profile-form";
+import { PasswordForm } from "@/components/dashboard/password-form";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
@@ -30,11 +32,24 @@ export default async function SettingsPage() {
         <CardHeader>
           <CardTitle className="text-base">Profil</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="flex flex-col gap-6">
+          <AvatarUpload
+            avatarUrl={profile?.avatar_url ?? null}
+            fallback={(profile?.full_name ?? profile?.email ?? "U").slice(0, 2).toUpperCase()}
+          />
           <ProfileForm
             email={profile?.email ?? user!.email ?? ""}
             fullName={profile?.full_name ?? ""}
           />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Mot de passe</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <PasswordForm />
         </CardContent>
       </Card>
 
