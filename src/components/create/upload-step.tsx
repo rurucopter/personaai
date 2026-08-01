@@ -25,6 +25,22 @@ export function UploadStep({ onUploaded, onReset, previewUrl }: UploadStepProps)
   const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  function sanitizeFileName(name: string): string {
+    const dotIndex = name.lastIndexOf(".");
+    const base = dotIndex > 0 ? name.slice(0, dotIndex) : name;
+    const ext = dotIndex > 0 ? name.slice(dotIndex + 1) : "mp4";
+
+    const cleanBase = base
+      .normalize("NFD")
+      .replace(/[̀-ͯ]/g, "") // strip accents
+      .replace(/[^a-zA-Z0-9-_]+/g, "-")
+      .replace(/-+/g, "-")
+      .replace(/^-|-$/g, "")
+      .toLowerCase();
+
+    return `${cleanBase || "video"}.${ext.toLowerCase()}`;
+  }
+
   function readDuration(file: File): Promise<{ duration: number; localUrl: string }> {
     return new Promise((resolve, reject) => {
       const localUrl = URL.createObjectURL(file);
@@ -71,7 +87,7 @@ export function UploadStep({ onUploaded, onReset, previewUrl }: UploadStepProps)
         return;
       }
 
-      const path = `${user.id}/${Date.now()}-${file.name}`;
+      const path = `${user.id}/${Date.now()}-${sanitizeFileName(file.name)}`;
       const { error: uploadError } = await supabase.storage
         .from("source-videos")
         .upload(path, file);
