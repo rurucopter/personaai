@@ -9,3 +9,5 @@ const QUALITY_COST: Record<NonNullable<TransformationSettings["quality"]>, numbe
 export function computeGenerationCost(settings: TransformationSettings): number {
   return QUALITY_COST[settings.quality ?? "standard"];
 }
+
+export const CHARACTER_IMAGE_COST = 1;

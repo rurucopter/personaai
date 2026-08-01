@@ -28,11 +28,11 @@ function loadEnvLocal() {
 
 loadEnvLocal();
 
-const REPLICATE_TOKEN = process.env.REPLICATE_API_TOKEN;
+const FAL_API_KEY = process.env.FAL_API_KEY;
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-if (!REPLICATE_TOKEN || !SUPABASE_URL || !SERVICE_ROLE_KEY) {
+if (!FAL_API_KEY || !SUPABASE_URL || !SERVICE_ROLE_KEY) {
   console.error("Missing required env vars.");
   process.exit(1);
 }
@@ -61,30 +61,44 @@ const PERSONAS = [
 ];
 
 async function generateImage(prompt) {
-  const res = await fetch(
-    "https://api.replicate.com/v1/models/black-forest-labs/flux-schnell/predictions",
-    {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${REPLICATE_TOKEN}`,
-        "Content-Type": "application/json",
-        Prefer: "wait",
-      },
-      body: JSON.stringify({
-        input: { prompt, aspect_ratio: "3:4", output_format: "webp" },
-      }),
-    }
-  );
+  const res = await fetch("https://queue.fal.run/fal-ai/flux/schnell", {
+    method: "POST",
+    headers: {
+      Authorization: `Key ${FAL_API_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      prompt,
+      image_size: "portrait_4_3",
+      output_format: "jpeg",
+      num_images: 1,
+    }),
+  });
 
   if (!res.ok) {
-    throw new Error(`Replicate error: ${res.status} ${await res.text()}`);
+    throw new Error(`Fal submit error: ${res.status} ${await res.text()}`);
   }
 
-  const data = await res.json();
-  if (data.status !== "succeeded") {
-    throw new Error(`Prediction not succeeded: ${data.status} ${JSON.stringify(data.error)}`);
+  const { request_id } = await res.json();
+
+  for (let i = 0; i < 30; i++) {
+    await new Promise((r) => setTimeout(r, 2000));
+    const statusRes = await fetch(
+      `https://queue.fal.run/fal-ai/flux/schnell/requests/${request_id}/status`,
+      { headers: { Authorization: `Key ${FAL_API_KEY}` } }
+    );
+    const statusData = await statusRes.json();
+    if (statusData.status === "COMPLETED") {
+      const resultRes = await fetch(
+        `https://queue.fal.run/fal-ai/flux/schnell/requests/${request_id}`,
+        { headers: { Authorization: `Key ${FAL_API_KEY}` } }
+      );
+      const result = await resultRes.json();
+      return result.images[0].url;
+    }
   }
-  return data.output[0];
+
+  throw new Error("Timed out waiting for image generation.");
 }
 
 async function uploadToSupabase(path, bytes) {
@@ -95,7 +109,7 @@ async function uploadToSupabase(path, bytes) {
       headers: {
         Authorization: `Bearer ${SERVICE_ROLE_KEY}`,
         apikey: SERVICE_ROLE_KEY,
-        "Content-Type": "image/webp",
+        "Content-Type": "image/jpeg",
         "x-upsert": "true",
       },
       body: bytes,
@@ -116,7 +130,7 @@ async function main() {
       const imageUrl = await generateImage(persona.prompt);
       const imageRes = await fetch(imageUrl);
       const bytes = Buffer.from(await imageRes.arrayBuffer());
-      const path = `${persona.id}.webp`;
+      const path = `${persona.id}.jpg`;
       await uploadToSupabase(path, bytes);
       results[persona.id] = `${SUPABASE_URL}/storage/v1/object/public/persona-references/${path}`;
       console.log("OK");

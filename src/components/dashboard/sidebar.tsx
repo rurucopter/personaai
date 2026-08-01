@@ -10,12 +10,14 @@ import {
   Home,
   Settings,
   Sparkles,
+  UserRound,
   Video,
 } from "lucide-react";
 
 const NAV_ITEMS = [
   { href: "/dashboard", label: "Accueil", icon: Home },
   { href: "/dashboard/create", label: "Créer une transformation", icon: Sparkles },
+  { href: "/dashboard/character", label: "Personnage IA", icon: UserRound },
   { href: "/dashboard/videos", label: "Mes vidéos", icon: Video },
   { href: "/dashboard/history", label: "Historique", icon: Clock },
   { href: "/dashboard/favorites", label: "Favoris", icon: Heart },

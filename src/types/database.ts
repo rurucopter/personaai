@@ -122,3 +122,28 @@ export interface HistoryRow {
   metadata: Record<string, unknown>;
   created_at: string;
 }
+
+export interface CharacterRow {
+  id: string;
+  user_id: string;
+  name: string;
+  description: string;
+  reference_image_url: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CharacterImageRow {
+  id: string;
+  character_id: string;
+  user_id: string;
+  prompt: string;
+  is_reference: boolean;
+  status: VideoGenerationStatus;
+  provider: string;
+  provider_job_id: string | null;
+  image_url: string | null;
+  error_message: string | null;
+  credits_spent: number;
+  created_at: string;
+}
