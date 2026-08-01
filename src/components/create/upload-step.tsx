@@ -5,7 +5,9 @@ import { UploadCloud, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import {
   isAcceptedVideoFile,
+  MAX_SOURCE_SECONDS,
   MAX_UPLOAD_SIZE_BYTES,
+  MIN_SOURCE_SECONDS,
 } from "@/lib/upload-constraints";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -23,21 +25,42 @@ export function UploadStep({ onUploaded, onReset, previewUrl }: UploadStepProps)
   const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  function readDuration(file: File): Promise<{ duration: number; localUrl: string }> {
+    return new Promise((resolve, reject) => {
+      const localUrl = URL.createObjectURL(file);
+      const video = document.createElement("video");
+      video.preload = "metadata";
+      video.onloadedmetadata = () => resolve({ duration: video.duration, localUrl });
+      video.onerror = () => reject(new Error("Impossible de lire cette vidéo."));
+      video.src = localUrl;
+    });
+  }
+
   async function handleFile(file: File) {
     setError(null);
 
     if (!isAcceptedVideoFile(file)) {
-      setError("Format non supporté. Utilisez MP4, MOV ou WEBM.");
+      setError("Format non supporté. Utilisez MP4 ou MOV.");
       return;
     }
     if (file.size > MAX_UPLOAD_SIZE_BYTES) {
-      setError("Fichier trop volumineux (16 Mo maximum pour le moment).");
+      setError("Fichier trop volumineux (200 Mo maximum).");
       return;
     }
 
     setUploading(true);
 
     try {
+      const { duration, localUrl } = await readDuration(file);
+
+      if (duration < MIN_SOURCE_SECONDS || duration > MAX_SOURCE_SECONDS) {
+        setError(
+          `Durée non supportée (${duration.toFixed(1)}s). Utilisez une vidéo de ${MIN_SOURCE_SECONDS} à ${MAX_SOURCE_SECONDS} secondes.`
+        );
+        URL.revokeObjectURL(localUrl);
+        return;
+      }
+
       const supabase = createClient();
       const {
         data: { user },
@@ -58,13 +81,9 @@ export function UploadStep({ onUploaded, onReset, previewUrl }: UploadStepProps)
         return;
       }
 
-      const localUrl = URL.createObjectURL(file);
-      const video = document.createElement("video");
-      video.preload = "metadata";
-      video.src = localUrl;
-      video.onloadedmetadata = () => {
-        onUploaded(path, video.duration, localUrl);
-      };
+      onUploaded(path, duration, localUrl);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erreur lors de l'import.");
     } finally {
       setUploading(false);
     }
@@ -112,8 +131,8 @@ export function UploadStep({ onUploaded, onReset, previewUrl }: UploadStepProps)
         <div>
           <p className="font-medium">Glissez-déposez votre vidéo</p>
           <p className="text-sm text-muted-foreground">
-            MP4, MOV ou WEBM — 16 Mo maximum. Seules les 5 premières secondes
-            seront utilisées.
+            MP4 ou MOV — {MIN_SOURCE_SECONDS} à {MAX_SOURCE_SECONDS} secondes, 200 Mo
+            maximum.
           </p>
         </div>
         <Button
@@ -127,7 +146,7 @@ export function UploadStep({ onUploaded, onReset, previewUrl }: UploadStepProps)
         <input
           ref={inputRef}
           type="file"
-          accept="video/mp4,video/quicktime,video/webm"
+          accept="video/mp4,video/quicktime"
           className="hidden"
           onChange={(e) => {
             const file = e.target.files?.[0];

@@ -3,12 +3,13 @@ import { createServiceRoleClient } from "@/lib/supabase/server";
 import type { VideoRow } from "@/types/database";
 
 const FAILED_STATUSES = new Set(["ERROR", "FAILED", "failed", "canceled"]);
-const SUCCESS_STATUSES = new Set(["COMPLETED", "succeeded"]);
+const SUCCESS_STATUSES = new Set(["OK", "COMPLETED", "succeeded"]);
 
 /**
  * Generic webhook receiver for AI video providers. Each provider's payload
- * shape differs — Replicate sends the full prediction object (id, status,
- * output as a plain URI string), Fal sends { request_id, status, video: { url } }.
+ * shape differs:
+ * - Fal (active default): { request_id, status: "OK"|"ERROR", payload: { video: { url } }, error }
+ * - Replicate: the full prediction object — { id, status: "succeeded"|"failed", output: "<uri>" }
  * Providers are matched to a video row via provider_job_id, not payload shape.
  */
 export async function POST(request: Request) {
@@ -58,8 +59,10 @@ export async function POST(request: Request) {
     return NextResponse.json({ success: true });
   }
 
+  // Fal wraps model output under `payload`; Replicate exposes it at the top level.
+  const output = payload.payload ?? payload;
   const resultVideoUrl =
-    payload.video?.url ?? payload.result_video_url ?? (typeof payload.output === "string" ? payload.output : undefined);
+    output.video?.url ?? output.result_video_url ?? (typeof output.output === "string" ? output.output : undefined);
 
   await supabase
     .from("videos")
@@ -67,7 +70,7 @@ export async function POST(request: Request) {
       status: "completed",
       progress: 100,
       result_video_url: resultVideoUrl,
-      thumbnail_url: payload.thumbnail?.url ?? payload.thumbnail_url ?? null,
+      thumbnail_url: output.thumbnail?.url ?? output.thumbnail_url ?? null,
     })
     .eq("id", video.id);
 
