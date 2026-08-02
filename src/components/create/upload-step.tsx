@@ -8,6 +8,7 @@ import {
   MAX_SOURCE_SECONDS,
   MAX_UPLOAD_SIZE_BYTES,
   MIN_SOURCE_SECONDS,
+  MIN_SOURCE_WIDTH_PX,
 } from "@/lib/upload-constraints";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -41,12 +42,20 @@ export function UploadStep({ onUploaded, onReset, previewUrl }: UploadStepProps)
     return `${cleanBase || "video"}.${ext.toLowerCase()}`;
   }
 
-  function readDuration(file: File): Promise<{ duration: number; localUrl: string }> {
+  function readVideoMeta(
+    file: File
+  ): Promise<{ duration: number; width: number; height: number; localUrl: string }> {
     return new Promise((resolve, reject) => {
       const localUrl = URL.createObjectURL(file);
       const video = document.createElement("video");
       video.preload = "metadata";
-      video.onloadedmetadata = () => resolve({ duration: video.duration, localUrl });
+      video.onloadedmetadata = () =>
+        resolve({
+          duration: video.duration,
+          width: video.videoWidth,
+          height: video.videoHeight,
+          localUrl,
+        });
       video.onerror = () => reject(new Error("Impossible de lire cette vidéo."));
       video.src = localUrl;
     });
@@ -67,11 +76,19 @@ export function UploadStep({ onUploaded, onReset, previewUrl }: UploadStepProps)
     setUploading(true);
 
     try {
-      const { duration, localUrl } = await readDuration(file);
+      const { duration, width, height, localUrl } = await readVideoMeta(file);
 
       if (duration < MIN_SOURCE_SECONDS || duration > MAX_SOURCE_SECONDS) {
         setError(
           `Durée non supportée (${duration.toFixed(1)}s). Utilisez une vidéo de ${MIN_SOURCE_SECONDS} à ${MAX_SOURCE_SECONDS} secondes.`
+        );
+        URL.revokeObjectURL(localUrl);
+        return;
+      }
+
+      if (Math.min(width, height) < MIN_SOURCE_WIDTH_PX) {
+        setError(
+          `Résolution trop faible (${width}×${height}px). Le plus petit côté doit faire au moins ${MIN_SOURCE_WIDTH_PX}px — filmez en HD/1080p plutôt qu'en qualité réduite.`
         );
         URL.revokeObjectURL(localUrl);
         return;
@@ -147,8 +164,8 @@ export function UploadStep({ onUploaded, onReset, previewUrl }: UploadStepProps)
         <div>
           <p className="font-medium">Glissez-déposez votre vidéo</p>
           <p className="text-sm text-muted-foreground">
-            MP4 ou MOV — {MIN_SOURCE_SECONDS} à {MAX_SOURCE_SECONDS} secondes, 200 Mo
-            maximum.
+            MP4 ou MOV — {MIN_SOURCE_SECONDS} à {MAX_SOURCE_SECONDS} secondes, HD
+            (720px minimum), 200 Mo maximum.
           </p>
         </div>
         <Button

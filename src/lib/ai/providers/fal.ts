@@ -7,7 +7,12 @@ import type {
 import { buildTransformationPrompt } from "@/lib/ai/prompt-builder";
 
 const QUEUE_BASE = "https://queue.fal.run";
-const ENDPOINT_ID = "fal-ai/kling-video/o1/video-to-video/edit";
+const SUBMIT_ENDPOINT_ID = "fal-ai/kling-video/o1/video-to-video/edit";
+// Fal's queue routes status/result/cancel under the app's base path, not the
+// full submit endpoint — confirmed against the live API on 2026-08-01
+// (GET .../kling-video/o1/video-to-video/edit/requests/{id}/status returns
+// 405; GET .../kling-video/requests/{id}/status is the one that works).
+const QUEUE_APP_BASE = "fal-ai/kling-video";
 
 function authHeaders() {
   const key = process.env.FAL_API_KEY;
@@ -22,7 +27,8 @@ interface FalQueueStatus {
 }
 
 interface FalVideoOutput {
-  video: { url: string; content_type: string; file_size: number; file_name: string };
+  video?: { url: string; content_type: string; file_size: number; file_name: string };
+  detail?: Array<{ msg: string }>;
 }
 
 /**
@@ -38,7 +44,7 @@ export const falProvider: VideoGenerationProvider = {
   name: "fal",
 
   async submitJob(input: GenerationJobInput): Promise<GenerationJobHandle> {
-    const url = new URL(`${QUEUE_BASE}/${ENDPOINT_ID}`);
+    const url = new URL(`${QUEUE_BASE}/${SUBMIT_ENDPOINT_ID}`);
     if (input.webhookUrl) url.searchParams.set("fal_webhook", input.webhookUrl);
 
     const res = await fetch(url.toString(), {
@@ -61,7 +67,7 @@ export const falProvider: VideoGenerationProvider = {
 
   async getJobStatus(handle: GenerationJobHandle): Promise<GenerationJobResult> {
     const res = await fetch(
-      `${QUEUE_BASE}/${ENDPOINT_ID}/requests/${handle.providerJobId}/status`,
+      `${QUEUE_BASE}/${QUEUE_APP_BASE}/requests/${handle.providerJobId}/status`,
       { headers: authHeaders() }
     );
 
@@ -79,25 +85,28 @@ export const falProvider: VideoGenerationProvider = {
     }
 
     const resultRes = await fetch(
-      `${QUEUE_BASE}/${ENDPOINT_ID}/requests/${handle.providerJobId}`,
+      `${QUEUE_BASE}/${QUEUE_APP_BASE}/requests/${handle.providerJobId}`,
       { headers: authHeaders() }
     );
 
-    if (!resultRes.ok) {
-      return { status: "failed", errorMessage: await resultRes.text() };
-    }
-
     const result: FalVideoOutput = await resultRes.json();
+
+    if (!resultRes.ok || !result.video?.url) {
+      const errorMessage =
+        result.detail?.map((d) => d.msg).join(" ") ??
+        (!resultRes.ok ? `${resultRes.status} error` : "Aucune vidéo produite.");
+      return { status: "failed", errorMessage };
+    }
 
     return {
       status: "completed",
       progress: 100,
-      resultVideoUrl: result.video?.url,
+      resultVideoUrl: result.video.url,
     };
   },
 
   async cancelJob(handle: GenerationJobHandle): Promise<void> {
-    await fetch(`${QUEUE_BASE}/${ENDPOINT_ID}/requests/${handle.providerJobId}/cancel`, {
+    await fetch(`${QUEUE_BASE}/${QUEUE_APP_BASE}/requests/${handle.providerJobId}/cancel`, {
       method: "PUT",
       headers: authHeaders(),
     });

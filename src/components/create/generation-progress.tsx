@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect } from "react";
 import { CheckCircle2, XCircle } from "lucide-react";
 import { useVideoProgress } from "@/hooks/use-video-progress";
 import { Button } from "@/components/ui/button";
@@ -17,6 +18,18 @@ const STATUS_LABEL: Record<VideoRow["status"], string> = {
 
 export function GenerationProgress({ initialVideo }: { initialVideo: VideoRow }) {
   const video = useVideoProgress(initialVideo);
+
+  // Webhooks can't reach localhost in dev, so poll as a fallback — the
+  // resulting DB update flows back through the realtime subscription above.
+  useEffect(() => {
+    if (video.status !== "queued" && video.status !== "processing") return;
+
+    const interval = setInterval(() => {
+      fetch(`/api/videos/${video.id}/poll`, { method: "POST" }).catch(() => {});
+    }, 4000);
+
+    return () => clearInterval(interval);
+  }, [video.id, video.status]);
 
   if (video.status === "completed") {
     return (
