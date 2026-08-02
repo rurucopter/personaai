@@ -4,7 +4,6 @@ import {
   BACKGROUNDS,
   CAMERA_ANGLES,
   COLOR_PALETTES,
-  DURATION_OPTIONS,
   EXPRESSIONS,
   HAIR_STYLES,
   LIGHTING_OPTIONS,
@@ -150,24 +149,6 @@ export function CustomizeStep({ settings, onChange }: CustomizeStepProps) {
               {QUALITY_LEVELS.map((q) => (
                 <SelectItem key={q.value} value={q.value}>
                   {q.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="flex flex-col gap-2">
-          <Label>Durée</Label>
-          <Select
-            value={settings.durationSeconds?.toString()}
-            onValueChange={(v) => v && set("durationSeconds", Number(v))}
-          >
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Choisir..." />
-            </SelectTrigger>
-            <SelectContent>
-              {DURATION_OPTIONS.map((d) => (
-                <SelectItem key={d} value={d.toString()}>
-                  {d} secondes
                 </SelectItem>
               ))}
             </SelectContent>

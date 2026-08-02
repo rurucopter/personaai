@@ -66,5 +66,3 @@ export const QUALITY_LEVELS = [
   { value: "high", label: "Haute" },
   { value: "ultra", label: "Ultra" },
 ] as const;
-
-export const DURATION_OPTIONS = [5, 10, 15, 30] as const;

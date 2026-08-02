@@ -24,7 +24,6 @@ export interface TransformationSettings {
   posture?: string;
   cameraAngle?: string;
   quality?: "standard" | "high" | "ultra";
-  durationSeconds?: number;
 }
 
 export interface GenerationJobInput {

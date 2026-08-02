@@ -1,40 +1,66 @@
 import { getPersonaById } from "@/lib/personas";
+import {
+  BACKGROUND_EN,
+  CAMERA_ANGLE_EN,
+  COLOR_PALETTE_EN,
+  EXPRESSION_EN,
+  HAIR_STYLE_EN,
+  LIGHTING_EN,
+  OUTFIT_STYLE_EN,
+  POSTURE_EN,
+  translateOption,
+} from "@/lib/ai/option-translations";
 import type { TransformationSettings } from "@/types/ai-provider";
 
+function levelToPhrase(level: number | undefined, low: string, mid: string, high: string): string | undefined {
+  if (typeof level !== "number") return undefined;
+  if (level < 33) return low;
+  if (level < 66) return mid;
+  return high;
+}
+
 /**
- * Builds a single descriptive prompt from the persona + style settings.
- * Video-to-video models like Aleph take one free-text instruction rather
- * than structured fields, so every wizard choice gets folded in here.
+ * Builds a single natural-language prompt for the AI video edit model.
+ * Kling O1 Edit reads best as fluent English, not a list of labeled
+ * fields — and definitely not a mix of English structure with French UI
+ * option values, which used to happen here and visibly hurt output quality.
  */
 export function buildTransformationPrompt(settings: TransformationSettings): string {
   const persona = getPersonaById(settings.persona);
-  const parts: string[] = [];
 
-  parts.push(
-    persona
-      ? `Transform the person in this video into a ${persona.label}: ${persona.description}`
-      : "Transform the person in this video."
-  );
-  parts.push(
-    "Keep the same person, face, and identity fully recognizable — only change their styling, outfit, environment, and mood."
-  );
+  const traits = [
+    translateOption(OUTFIT_STYLE_EN, settings.outfitStyle),
+    translateOption(HAIR_STYLE_EN, settings.hairStyle),
+    translateOption(COLOR_PALETTE_EN, settings.colorPalette),
+    translateOption(BACKGROUND_EN, settings.background),
+    translateOption(LIGHTING_EN, settings.lighting),
+    translateOption(EXPRESSION_EN, settings.expression),
+    translateOption(POSTURE_EN, settings.posture),
+    translateOption(CAMERA_ANGLE_EN, settings.cameraAngle),
+    levelToPhrase(settings.energyLevel, "calm, low-key energy", "steady, natural energy", "high, vibrant energy"),
+    levelToPhrase(settings.smileLevel, "a subtle, reserved smile", "a natural, easy smile", "a bright, warm smile"),
+  ].filter(Boolean);
 
-  if (settings.outfitStyle) parts.push(`Outfit: ${settings.outfitStyle}.`);
-  if (settings.hairStyle) parts.push(`Hair: ${settings.hairStyle}.`);
-  if (settings.colorPalette) parts.push(`Color palette: ${settings.colorPalette}.`);
-  if (settings.background) parts.push(`Background: ${settings.background}.`);
-  if (settings.lighting) parts.push(`Lighting: ${settings.lighting}.`);
-  if (settings.expression) parts.push(`Facial expression: ${settings.expression}.`);
-  if (settings.posture) parts.push(`Posture: ${settings.posture}.`);
-  if (settings.cameraAngle) parts.push(`Camera angle: ${settings.cameraAngle}.`);
-  if (typeof settings.energyLevel === "number") {
-    parts.push(`Energy level: ${settings.energyLevel}/100.`);
-  }
-  if (typeof settings.smileLevel === "number") {
-    parts.push(`Smile intensity: ${settings.smileLevel}/100.`);
-  }
+  const qualityEmphasis =
+    settings.quality === "ultra"
+      ? "Render in the highest possible fidelity, with crisp fine detail and no artifacts."
+      : settings.quality === "high"
+        ? "Render with strong fidelity and clean detail."
+        : "";
 
-  parts.push("Photorealistic, highly detailed, natural motion.");
+  const scene = persona
+    ? `Turn the person in this video into ${persona.promptDescription}`
+    : "Restyle the person in this video";
 
-  return parts.join(" ");
+  const traitClause = traits.length > 0 ? `, with ${traits.join(", ")}` : "";
+
+  return [
+    `${scene}${traitClause}.`,
+    "Keep their face and identity fully recognizable and unchanged — only their styling, outfit, environment, and mood should shift.",
+    "The motion, timing, and camera work from the original clip should stay natural and unaltered.",
+    "Photorealistic, cinematic quality, no visible AI artifacts.",
+    qualityEmphasis,
+  ]
+    .filter(Boolean)
+    .join(" ");
 }

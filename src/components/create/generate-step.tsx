@@ -37,9 +37,6 @@ export function GenerateStep({
           {settings.outfitStyle && <Badge variant="secondary">{settings.outfitStyle}</Badge>}
           {settings.background && <Badge variant="secondary">{settings.background}</Badge>}
           {settings.quality && <Badge variant="secondary">Qualité {settings.quality}</Badge>}
-          {settings.durationSeconds && (
-            <Badge variant="secondary">{settings.durationSeconds}s</Badge>
-          )}
         </div>
       </div>
 

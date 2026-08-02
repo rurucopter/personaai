@@ -16,7 +16,6 @@ import type { VideoRow } from "@/types/database";
 
 const DEFAULT_SETTINGS: Omit<TransformationSettings, "persona"> = {
   quality: "standard",
-  durationSeconds: 10,
   energyLevel: 50,
   smileLevel: 50,
 };
