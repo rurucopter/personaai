@@ -79,6 +79,8 @@ export async function POST(
     .from("source-videos")
     .createSignedUrl(source.source_video_url, 60 * 60);
 
+  let finalVideo = video;
+
   try {
     const provider = getVideoProvider(source.provider);
     const handle = await provider.submitJob({
@@ -87,18 +89,26 @@ export async function POST(
       webhookUrl: `${process.env.NEXT_PUBLIC_APP_URL}/api/webhooks/generation`,
     });
 
-    await supabase
+    const { data: updated } = await supabase
       .from("videos")
       .update({ provider_job_id: handle.providerJobId, status: "processing" })
-      .eq("id", video.id);
+      .eq("id", video.id)
+      .select()
+      .single();
+
+    if (updated) finalVideo = updated;
   } catch (err) {
-    await supabase
+    const { data: updated } = await supabase
       .from("videos")
       .update({
         status: "failed",
         error_message: err instanceof Error ? err.message : "Erreur du fournisseur IA.",
       })
-      .eq("id", video.id);
+      .eq("id", video.id)
+      .select()
+      .single();
+
+    if (updated) finalVideo = updated;
     await service.rpc("refund_credits", { p_user_id: user.id, p_amount: cost, p_video_id: video.id });
   }
 
@@ -109,5 +119,5 @@ export async function POST(
     metadata: { source_video_id: id },
   });
 
-  return NextResponse.json({ video });
+  return NextResponse.json({ video: finalVideo });
 }

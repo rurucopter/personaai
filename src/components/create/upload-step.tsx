@@ -10,6 +10,7 @@ import {
   MIN_SOURCE_SECONDS,
   MIN_SOURCE_WIDTH_PX,
 } from "@/lib/upload-constraints";
+import { upscaleVideo } from "@/lib/video-upscale";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
@@ -20,9 +21,12 @@ interface UploadStepProps {
   previewUrl: string | null;
 }
 
+type Phase = "idle" | "upscaling" | "uploading";
+
 export function UploadStep({ onUploaded, onReset, previewUrl }: UploadStepProps) {
   const [dragging, setDragging] = useState(false);
-  const [uploading, setUploading] = useState(false);
+  const [phase, setPhase] = useState<Phase>("idle");
+  const [upscaleProgress, setUpscaleProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -73,10 +77,8 @@ export function UploadStep({ onUploaded, onReset, previewUrl }: UploadStepProps)
       return;
     }
 
-    setUploading(true);
-
     try {
-      const { duration, width, height, localUrl } = await readVideoMeta(file);
+      let { duration, width, height, localUrl } = await readVideoMeta(file);
 
       if (duration < MIN_SOURCE_SECONDS || duration > MAX_SOURCE_SECONDS) {
         setError(
@@ -86,13 +88,31 @@ export function UploadStep({ onUploaded, onReset, previewUrl }: UploadStepProps)
         return;
       }
 
+      let fileToUpload = file;
+
       if (Math.min(width, height) < MIN_SOURCE_WIDTH_PX) {
-        setError(
-          `Résolution trop faible (${width}×${height}px). Le plus petit côté doit faire au moins ${MIN_SOURCE_WIDTH_PX}px — filmez en HD/1080p plutôt qu'en qualité réduite.`
-        );
+        setPhase("upscaling");
+        setUpscaleProgress(0);
+
+        try {
+          fileToUpload = await upscaleVideo(file, MIN_SOURCE_WIDTH_PX, setUpscaleProgress);
+        } catch {
+          setError(
+            "Impossible d'améliorer automatiquement la résolution de cette vidéo. Essayez une vidéo filmée en HD/1080p."
+          );
+          URL.revokeObjectURL(localUrl);
+          return;
+        }
+
         URL.revokeObjectURL(localUrl);
-        return;
+        const upscaled = await readVideoMeta(fileToUpload);
+        duration = upscaled.duration;
+        width = upscaled.width;
+        height = upscaled.height;
+        localUrl = upscaled.localUrl;
       }
+
+      setPhase("uploading");
 
       const supabase = createClient();
       const {
@@ -104,10 +124,10 @@ export function UploadStep({ onUploaded, onReset, previewUrl }: UploadStepProps)
         return;
       }
 
-      const path = `${user.id}/${Date.now()}-${sanitizeFileName(file.name)}`;
+      const path = `${user.id}/${Date.now()}-${sanitizeFileName(fileToUpload.name)}`;
       const { error: uploadError } = await supabase.storage
         .from("source-videos")
-        .upload(path, file);
+        .upload(path, fileToUpload);
 
       if (uploadError) {
         setError(uploadError.message);
@@ -118,7 +138,7 @@ export function UploadStep({ onUploaded, onReset, previewUrl }: UploadStepProps)
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erreur lors de l'import.");
     } finally {
-      setUploading(false);
+      setPhase("idle");
     }
   }
 
@@ -164,17 +184,21 @@ export function UploadStep({ onUploaded, onReset, previewUrl }: UploadStepProps)
         <div>
           <p className="font-medium">Glissez-déposez votre vidéo</p>
           <p className="text-sm text-muted-foreground">
-            MP4 ou MOV — {MIN_SOURCE_SECONDS} à {MAX_SOURCE_SECONDS} secondes, HD
-            (720px minimum), 200 Mo maximum.
+            MP4 ou MOV — {MIN_SOURCE_SECONDS} à {MAX_SOURCE_SECONDS} secondes, 200 Mo
+            maximum. Résolution trop faible ? On l&apos;améliore automatiquement.
           </p>
         </div>
         <Button
           type="button"
           variant="outline"
-          disabled={uploading}
+          disabled={phase !== "idle"}
           onClick={() => inputRef.current?.click()}
         >
-          {uploading ? "Import en cours..." : "Parcourir"}
+          {phase === "upscaling"
+            ? "Amélioration de la qualité..."
+            : phase === "uploading"
+              ? "Import en cours..."
+              : "Parcourir"}
         </Button>
         <input
           ref={inputRef}
@@ -188,7 +212,8 @@ export function UploadStep({ onUploaded, onReset, previewUrl }: UploadStepProps)
         />
       </div>
 
-      {uploading && <Progress value={null} className="animate-pulse" />}
+      {phase === "upscaling" && <Progress value={upscaleProgress * 100} />}
+      {phase === "uploading" && <Progress value={null} className="animate-pulse" />}
       {error && <p className="text-sm text-destructive">{error}</p>}
     </div>
   );
