@@ -46,6 +46,7 @@ export const runwayProvider: VideoGenerationProvider = {
           input: {
             video: input.sourceVideoUrl,
             prompt: buildTransformationPrompt(input.settings),
+            ...(input.referenceImageUrl ? { reference_image: input.referenceImageUrl } : {}),
           },
           webhook: input.webhookUrl,
           webhook_events_filter: ["completed"],
