@@ -30,6 +30,9 @@ export interface GenerationJobInput {
   sourceVideoUrl: string;
   settings: TransformationSettings;
   webhookUrl?: string;
+  /** Still frame of the person's face, used by providers that support a
+   *  style/identity reference image to anchor generation more strongly. */
+  referenceImageUrl?: string;
 }
 
 export interface GenerationJobHandle {

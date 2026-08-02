@@ -9,6 +9,7 @@ import type { TransformationSettings } from "@/types/ai-provider";
 interface CreateVideoBody {
   sourceVideoPath: string;
   sourceDurationSeconds?: number;
+  referenceFramePath?: string | null;
   personaId: string;
   settings: Omit<TransformationSettings, "persona">;
 }
@@ -59,6 +60,14 @@ export async function POST(request: Request) {
     .from("source-videos")
     .createSignedUrl(body.sourceVideoPath, 60 * 60);
 
+  const referenceImageUrl = body.referenceFramePath
+    ? (
+        await supabase.storage
+          .from("video-frames")
+          .createSignedUrl(body.referenceFramePath, 60 * 60)
+      ).data?.signedUrl
+    : undefined;
+
   const { data: video, error: insertError } = await supabase
     .from("videos")
     .insert({
@@ -94,6 +103,7 @@ export async function POST(request: Request) {
       sourceVideoUrl: sourceUrlData?.signedUrl ?? body.sourceVideoPath,
       settings,
       webhookUrl: `${process.env.NEXT_PUBLIC_APP_URL}/api/webhooks/generation`,
+      referenceImageUrl,
     });
 
     const { data: updated } = await supabase

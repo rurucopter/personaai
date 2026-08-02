@@ -16,7 +16,12 @@ import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 
 interface UploadStepProps {
-  onUploaded: (path: string, durationSeconds: number, previewUrl: string) => void;
+  onUploaded: (
+    path: string,
+    durationSeconds: number,
+    previewUrl: string,
+    referenceFramePath: string | null
+  ) => void;
   onReset: () => void;
   previewUrl: string | null;
 }
@@ -44,6 +49,48 @@ export function UploadStep({ onUploaded, onReset, previewUrl }: UploadStepProps)
       .toLowerCase();
 
     return `${cleanBase || "video"}.${ext.toLowerCase()}`;
+  }
+
+  function grabFrame(file: File, atSeconds: number): Promise<Blob | null> {
+    return new Promise((resolve) => {
+      const localUrl = URL.createObjectURL(file);
+      const video = document.createElement("video");
+      video.preload = "auto";
+      video.muted = true;
+      video.src = localUrl;
+
+      video.onloadeddata = () => {
+        video.currentTime = Math.min(atSeconds, Math.max(0, video.duration - 0.1));
+      };
+
+      video.onseeked = () => {
+        const canvas = document.createElement("canvas");
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        const ctx = canvas.getContext("2d");
+
+        if (!ctx) {
+          URL.revokeObjectURL(localUrl);
+          resolve(null);
+          return;
+        }
+
+        ctx.drawImage(video, 0, 0);
+        canvas.toBlob(
+          (blob) => {
+            URL.revokeObjectURL(localUrl);
+            resolve(blob);
+          },
+          "image/jpeg",
+          0.92
+        );
+      };
+
+      video.onerror = () => {
+        URL.revokeObjectURL(localUrl);
+        resolve(null);
+      };
+    });
   }
 
   function readVideoMeta(
@@ -134,7 +181,22 @@ export function UploadStep({ onUploaded, onReset, previewUrl }: UploadStepProps)
         return;
       }
 
-      onUploaded(path, duration, localUrl);
+      // Best-effort: a still frame of the person's face, uploaded alongside
+      // the video, lets the AI anchor identity more strongly. Not fatal if
+      // it fails — generation still works from the video alone.
+      let referenceFramePath: string | null = null;
+      const frameBlob = await grabFrame(fileToUpload, duration / 2);
+
+      if (frameBlob) {
+        const framePath = `${user.id}/${Date.now()}-frame.jpg`;
+        const { error: frameUploadError } = await supabase.storage
+          .from("video-frames")
+          .upload(framePath, frameBlob, { contentType: "image/jpeg" });
+
+        if (!frameUploadError) referenceFramePath = framePath;
+      }
+
+      onUploaded(path, duration, localUrl, referenceFramePath);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erreur lors de l'import.");
     } finally {

@@ -25,6 +25,7 @@ export function CreationWizard({ creditBalance }: { creditBalance: number }) {
   const [sourceVideoPath, setSourceVideoPath] = useState<string | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [durationSeconds, setDurationSeconds] = useState<number | null>(null);
+  const [referenceFramePath, setReferenceFramePath] = useState<string | null>(null);
   const [personaId, setPersonaId] = useState<string | null>(null);
   const [settings, setSettings] =
     useState<Omit<TransformationSettings, "persona">>(DEFAULT_SETTINGS);
@@ -51,6 +52,7 @@ export function CreationWizard({ creditBalance }: { creditBalance: number }) {
         body: JSON.stringify({
           sourceVideoPath,
           sourceDurationSeconds: durationSeconds,
+          referenceFramePath,
           personaId,
           settings,
         }),
@@ -88,15 +90,17 @@ export function CreationWizard({ creditBalance }: { creditBalance: number }) {
           {step === 1 && (
             <UploadStep
               previewUrl={previewUrl}
-              onUploaded={(path, duration, preview) => {
+              onUploaded={(path, duration, preview, framePath) => {
                 setSourceVideoPath(path);
                 setDurationSeconds(duration);
                 setPreviewUrl(preview);
+                setReferenceFramePath(framePath);
               }}
               onReset={() => {
                 setSourceVideoPath(null);
                 setPreviewUrl(null);
                 setDurationSeconds(null);
+                setReferenceFramePath(null);
               }}
             />
           )}

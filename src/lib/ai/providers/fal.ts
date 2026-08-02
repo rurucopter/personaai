@@ -47,13 +47,19 @@ export const falProvider: VideoGenerationProvider = {
     const url = new URL(`${QUEUE_BASE}/${SUBMIT_ENDPOINT_ID}`);
     if (input.webhookUrl) url.searchParams.set("fal_webhook", input.webhookUrl);
 
+    let prompt = buildTransformationPrompt(input.settings);
+    if (input.referenceImageUrl) {
+      prompt += " Use @Image1 as the exact reference for the person's face and identity.";
+    }
+
     const res = await fetch(url.toString(), {
       method: "POST",
       headers: authHeaders(),
       body: JSON.stringify({
         video_url: input.sourceVideoUrl,
-        prompt: buildTransformationPrompt(input.settings),
+        prompt,
         keep_audio: false,
+        ...(input.referenceImageUrl ? { image_urls: [input.referenceImageUrl] } : {}),
       }),
     });
 
