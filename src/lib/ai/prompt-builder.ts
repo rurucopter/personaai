@@ -58,7 +58,8 @@ export function buildTransformationPrompt(settings: TransformationSettings): str
     `${scene}${traitClause}.`,
     "Keep their face and identity fully recognizable and unchanged — only their styling, outfit, environment, and mood should shift.",
     "The motion, timing, and camera work from the original clip should stay natural and unaltered.",
-    "Photorealistic, cinematic quality, no visible AI artifacts.",
+    "Preserve real, natural skin texture with visible pores and fine detail, and natural individual hair strands with realistic flyaways — avoid smoothed, airbrushed, plastic, or waxy skin, and avoid a synthetic CGI or video-game look.",
+    "Shot on a real camera, photorealistic, cinematic quality, no visible AI artifacts.",
     qualityEmphasis,
   ]
     .filter(Boolean)
