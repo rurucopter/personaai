@@ -43,9 +43,9 @@ function qualityEmphasis(settings: Omit<TransformationSettings, "persona">): str
 }
 
 const REALISM_FOOTER = [
-  "The motion, timing, and camera work from the original clip should stay natural and unaltered.",
+  "The motion, timing, and camera work from the original clip should stay natural and unaltered — no warping, morphing, flickering, or facial features drifting between frames.",
   "Preserve real, natural skin texture with visible pores and fine detail, and natural individual hair strands with realistic flyaways — avoid smoothed, airbrushed, plastic, or waxy skin, and avoid a synthetic CGI or video-game look.",
-  "Shot on a real camera, photorealistic, cinematic quality, no visible AI artifacts.",
+  "Shot on a real camera with a real lens: natural imperfections, realistic depth of field, true-to-life color, and grounded real-world lighting that matches the environment — not an obviously AI-generated or uncanny-valley look.",
 ];
 
 /**
@@ -77,7 +77,10 @@ export function buildTransformationPrompt(settings: TransformationSettings): str
  * Builds a prompt that replaces the person in the video with a fictional
  * AI character instead of just restyling them — used when the user picks
  * one of their AI avatars as the "persona" for a video transformation.
- * @Image1 refers to the reference image passed via image_urls/elements.
+ * Provider-agnostic: it describes WHO to become in plain language. Each
+ * adapter appends its own reference-image syntax (e.g. Kling's "@Element1")
+ * on top, since that syntax differs per provider and some (Aleph) don't
+ * use named references at all.
  */
 export function buildCharacterTransformationPrompt(
   characterDescription: string,
@@ -87,8 +90,8 @@ export function buildCharacterTransformationPrompt(
   const traitClause = traits.length > 0 ? ` Give them ${traits.join(", ")}.` : "";
 
   return [
-    `Replace the person in this video with the character shown in @Image1: ${characterDescription}.`,
-    "Keep @Image1's face and identity fully recognizable throughout — match their exact facial features, not just their style.",
+    `Replace the person in this video with a specific character: ${characterDescription}.`,
+    "Match that character's exact face and identity throughout the video — every frame should clearly be the same specific person, not just someone in a similar style.",
     `${traitClause}`,
     ...REALISM_FOOTER,
     qualityEmphasis(settings),

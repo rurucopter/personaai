@@ -47,8 +47,25 @@ export const falProvider: VideoGenerationProvider = {
     if (input.webhookUrl) url.searchParams.set("fal_webhook", input.webhookUrl);
 
     let prompt = input.prompt;
-    if (input.referenceImageUrl) {
+    let extra: Record<string, unknown> = {};
+
+    if (input.referenceImageUrl && input.referenceMode === "become") {
+      // "elements" defines an actual character (frontal + reference views)
+      // for the model to place in the scene — a much stronger identity
+      // lock than the generic style reference below, and the right tool
+      // for "replace this person with a specific character".
+      prompt += " @Element1 is the exact character to place in the video.";
+      extra = {
+        elements: [
+          {
+            frontal_image_url: input.referenceImageUrl,
+            reference_image_urls: [input.referenceImageUrl],
+          },
+        ],
+      };
+    } else if (input.referenceImageUrl) {
       prompt += " Use @Image1 as the exact reference for the face shown.";
+      extra = { image_urls: [input.referenceImageUrl] };
     }
 
     const res = await fetch(url.toString(), {
@@ -58,7 +75,7 @@ export const falProvider: VideoGenerationProvider = {
         video_url: input.sourceVideoUrl,
         prompt,
         keep_audio: false,
-        ...(input.referenceImageUrl ? { image_urls: [input.referenceImageUrl] } : {}),
+        ...extra,
       }),
     });
 
