@@ -53,10 +53,13 @@ export const runwayProvider: VideoGenerationProvider = {
           input: {
             video: input.sourceVideoUrl,
             prompt: buildTransformationPrompt(input.settings),
-            // Anchor the person's real face on the opening frame.
-            ...(input.referenceImageUrl
-              ? { keyframe_images: [input.referenceImageUrl], keyframe_positions: ["first"] }
-              : {}),
+            // Note: deliberately NOT passing the raw source frame as a
+            // keyframe_image here. keyframe_images describe what the OUTPUT
+            // should look like at that position — an untransformed frame of
+            // the original video told the model "the result should look
+            // like this (unchanged)", which suppressed the transformation
+            // almost entirely. Identity is already carried by the video
+            // itself; the prompt is what drives the actual restyling.
           },
           ...(hasValidWebhook
             ? { webhook: input.webhookUrl, webhook_events_filter: ["completed"] }
