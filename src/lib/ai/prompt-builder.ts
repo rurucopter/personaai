@@ -46,6 +46,7 @@ const REALISM_FOOTER = [
   "The motion, timing, and camera work from the original clip should stay natural and unaltered — no warping, morphing, flickering, or facial features drifting between frames.",
   "Preserve real, natural skin texture with visible pores and fine detail, and natural individual hair strands with realistic flyaways — avoid smoothed, airbrushed, plastic, or waxy skin, and avoid a synthetic CGI or video-game look.",
   "Shot on a real camera with a real lens: natural imperfections, realistic depth of field, true-to-life color, and grounded real-world lighting that matches the environment — not an obviously AI-generated or uncanny-valley look.",
+  "Keep the face imperfect and asymmetric like a real person's — slightly uneven features, natural blemishes or texture variation, not a flawless or symmetrical AI-generated face. Perfectly smooth, flawless skin and symmetry are the biggest tell that something is AI-generated, so avoid them completely.",
 ];
 
 /**

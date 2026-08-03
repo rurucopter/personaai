@@ -26,24 +26,36 @@ const FAL_API_KEY = process.env.FAL_API_KEY;
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
+const IMPERFECTION_SUFFIX =
+  "Candid, unretouched phone-camera snapshot look, not a studio shoot. Real, natural skin with visible pores, faint texture, and very subtle asymmetry in the face — not airbrushed or flawless. A couple of small natural imperfections like a faint freckle or slightly uneven eyebrows. Natural, slightly imperfect hair with a few flyaway strands. Avoid a symmetrical, overly smooth, or synthetic AI-generated look.";
+
 const TEMPLATES = [
   {
     id: "blonde-lifestyle",
     prompt:
-      "Professional lifestyle portrait photo of a natural-looking 26 year old blonde woman with soft wavy hair, warm friendly smile, effortless elegant style, French Riviera lifestyle setting. Natural lighting, photorealistic, high detail, editorial photography style.",
+      `Candid lifestyle photo of a natural-looking 26 year old blonde woman with soft wavy hair, warm friendly smile, effortless elegant style, French Riviera lifestyle setting. Natural lighting, photorealistic. ${IMPERFECTION_SUFFIX}`,
   },
   {
     id: "brunette-lifestyle",
     prompt:
-      "Professional lifestyle portrait photo of a natural-looking 27 year old brunette woman with sleek shoulder-length hair, confident warm expression, chic urban style, Parisian city lifestyle setting. Natural lighting, photorealistic, high detail, editorial photography style.",
+      `Candid lifestyle photo of a natural-looking 27 year old brunette woman with sleek shoulder-length hair, confident warm expression, chic urban style, Parisian city lifestyle setting. Natural lighting, photorealistic. ${IMPERFECTION_SUFFIX}`,
   },
 ];
 
 async function generateImage(prompt) {
-  const res = await fetch("https://queue.fal.run/fal-ai/flux/schnell", {
+  // flux/dev (28 inference steps) instead of flux/schnell (fixed at 4):
+  // schnell is fast but largely ignores nuanced instructions like "subtle
+  // asymmetry" or "natural imperfections" — dev actually follows them.
+  const res = await fetch("https://queue.fal.run/fal-ai/flux/dev", {
     method: "POST",
     headers: { Authorization: `Key ${FAL_API_KEY}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ prompt, image_size: "portrait_4_3", output_format: "jpeg", num_images: 1 }),
+    body: JSON.stringify({
+      prompt,
+      image_size: "portrait_4_3",
+      output_format: "jpeg",
+      num_images: 1,
+      num_inference_steps: 35,
+    }),
   });
 
   if (!res.ok) throw new Error(`Fal submit error: ${res.status} ${await res.text()}`);
