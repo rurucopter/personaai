@@ -60,6 +60,13 @@ export const runwayProvider: VideoGenerationProvider = {
   name: "runway",
 
   async submitJob(input: GenerationJobInput): Promise<GenerationJobHandle> {
+    // Replicate validates the webhook field as a real HTTPS URL and rejects
+    // the whole submission (422) otherwise — unlike fal.ai, which silently
+    // accepts (and just never calls) an unreachable one. In local dev
+    // NEXT_PUBLIC_APP_URL is http://localhost, so omit it entirely and rely
+    // on the poll-based fallback instead of sending an invalid webhook.
+    const hasValidWebhook = input.webhookUrl?.startsWith("https://");
+
     const res = await fetch(
       `${REPLICATE_API_BASE}/models/${MODEL_OWNER}/${MODEL_NAME}/predictions`,
       {
@@ -72,8 +79,9 @@ export const runwayProvider: VideoGenerationProvider = {
             aspect_ratio: closestAspectRatio(input.sourceWidth, input.sourceHeight),
             ...(input.referenceImageUrl ? { reference_image: input.referenceImageUrl } : {}),
           },
-          webhook: input.webhookUrl,
-          webhook_events_filter: ["completed"],
+          ...(hasValidWebhook
+            ? { webhook: input.webhookUrl, webhook_events_filter: ["completed"] }
+            : {}),
         }),
       }
     );
