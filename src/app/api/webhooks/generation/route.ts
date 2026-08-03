@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createServiceRoleClient } from "@/lib/supabase/server";
+import { postprocessResultVideo } from "@/lib/video-postprocess";
 import type { VideoRow } from "@/types/database";
 
 const FAILED_STATUSES = new Set(["ERROR", "FAILED", "failed", "canceled"]);
@@ -61,8 +62,12 @@ export async function POST(request: Request) {
 
   // Fal wraps model output under `payload`; Replicate exposes it at the top level.
   const output = payload.payload ?? payload;
-  const resultVideoUrl =
+  const providerVideoUrl: string | undefined =
     output.video?.url ?? output.result_video_url ?? (typeof output.output === "string" ? output.output : undefined);
+
+  const resultVideoUrl = providerVideoUrl
+    ? await postprocessResultVideo(providerVideoUrl, video.id)
+    : providerVideoUrl;
 
   await supabase
     .from("videos")

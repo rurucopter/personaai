@@ -35,10 +35,14 @@ function buildTraits(settings: Omit<TransformationSettings, "persona">): string[
 }
 
 function qualityEmphasis(settings: Omit<TransformationSettings, "persona">): string {
+  // Careful with the wording here: "crisp", "clean", "highest fidelity" push
+  // the model toward a polished, airbrushed look — directly undermining the
+  // natural-texture/imperfection instructions below. Ask for resolution and
+  // detail, explicitly not smoothness.
   return settings.quality === "ultra"
-    ? "Render in the highest possible fidelity, with crisp fine detail and no artifacts."
+    ? "Render at the highest possible resolution and fine detail — sharp focus, not smoothed."
     : settings.quality === "high"
-      ? "Render with strong fidelity and clean detail."
+      ? "Render with strong resolution and detail — sharp focus, not smoothed."
       : "";
 }
 

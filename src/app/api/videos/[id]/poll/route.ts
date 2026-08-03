@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient, createServiceRoleClient } from "@/lib/supabase/server";
 import { getVideoProvider } from "@/lib/ai/registry";
+import { postprocessResultVideo } from "@/lib/video-postprocess";
 import type { VideoRow } from "@/types/database";
 
 /**
@@ -38,9 +39,13 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
   });
 
   if (result.status === "completed") {
+    const finalUrl = result.resultVideoUrl
+      ? await postprocessResultVideo(result.resultVideoUrl, video.id)
+      : result.resultVideoUrl;
+
     const { data: updated } = await supabase
       .from("videos")
-      .update({ status: "completed", progress: 100, result_video_url: result.resultVideoUrl })
+      .update({ status: "completed", progress: 100, result_video_url: finalUrl })
       .eq("id", video.id)
       .select()
       .single();
