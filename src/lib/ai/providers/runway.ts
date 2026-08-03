@@ -4,7 +4,6 @@ import type {
   GenerationJobResult,
   VideoGenerationProvider,
 } from "@/types/ai-provider";
-import { buildTransformationPrompt } from "@/lib/ai/prompt-builder";
 
 const REPLICATE_API_BASE = "https://api.replicate.com/v1";
 const MODEL_OWNER = "runwayml";
@@ -52,14 +51,16 @@ export const runwayProvider: VideoGenerationProvider = {
         body: JSON.stringify({
           input: {
             video: input.sourceVideoUrl,
-            prompt: buildTransformationPrompt(input.settings),
-            // Note: deliberately NOT passing the raw source frame as a
-            // keyframe_image here. keyframe_images describe what the OUTPUT
-            // should look like at that position — an untransformed frame of
-            // the original video told the model "the result should look
-            // like this (unchanged)", which suppressed the transformation
-            // almost entirely. Identity is already carried by the video
-            // itself; the prompt is what drives the actual restyling.
+            prompt: input.prompt,
+            // keyframe_images describe what the OUTPUT should look like at
+            // that position. Only use it in "become" mode (an AI character's
+            // face — that IS what we want the output to look like). In
+            // "preserve" mode it would be the user's own UNEDITED frame,
+            // which told the model "the result should look like this
+            // (unchanged)" and suppressed the restyling almost entirely.
+            ...(input.referenceImageUrl && input.referenceMode === "become"
+              ? { keyframe_images: [input.referenceImageUrl], keyframe_positions: ["first"] }
+              : {}),
           },
           ...(hasValidWebhook
             ? { webhook: input.webhookUrl, webhook_events_filter: ["completed"] }

@@ -12,7 +12,7 @@ import { GenerationProgress } from "@/components/create/generation-progress";
 import { Button } from "@/components/ui/button";
 import { computeGenerationCost } from "@/lib/credit-costs";
 import type { TransformationSettings } from "@/types/ai-provider";
-import type { VideoRow } from "@/types/database";
+import type { CharacterRow, VideoRow } from "@/types/database";
 
 const DEFAULT_SETTINGS: Omit<TransformationSettings, "persona"> = {
   quality: "standard",
@@ -20,7 +20,12 @@ const DEFAULT_SETTINGS: Omit<TransformationSettings, "persona"> = {
   smileLevel: 50,
 };
 
-export function CreationWizard({ creditBalance }: { creditBalance: number }) {
+interface CreationWizardProps {
+  creditBalance: number;
+  characters: CharacterRow[];
+}
+
+export function CreationWizard({ creditBalance, characters }: CreationWizardProps) {
   const [step, setStep] = useState(1);
   const [sourceVideoPath, setSourceVideoPath] = useState<string | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -112,7 +117,7 @@ export function CreationWizard({ creditBalance }: { creditBalance: number }) {
             />
           )}
           {step === 2 && (
-            <PersonaStep selected={personaId} onSelect={setPersonaId} />
+            <PersonaStep selected={personaId} onSelect={setPersonaId} characters={characters} />
           )}
           {step === 3 && (
             <CustomizeStep settings={settings} onChange={setSettings} />
@@ -126,6 +131,7 @@ export function CreationWizard({ creditBalance }: { creditBalance: number }) {
               submitting={submitting}
               error={error}
               onGenerate={handleGenerate}
+              characters={characters}
             />
           )}
         </motion.div>

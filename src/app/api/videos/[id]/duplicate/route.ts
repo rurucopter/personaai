@@ -3,8 +3,14 @@ import { createClient, createServiceRoleClient } from "@/lib/supabase/server";
 import { getVideoProvider } from "@/lib/ai/registry";
 import { computeGenerationCost } from "@/lib/credit-costs";
 import { isUnderGenerationRateLimit } from "@/lib/rate-limit";
-import type { TransformationSettings } from "@/types/ai-provider";
-import type { VideoRow } from "@/types/database";
+import {
+  buildCharacterTransformationPrompt,
+  buildTransformationPrompt,
+} from "@/lib/ai/prompt-builder";
+import type { GenerationJobInput, TransformationSettings } from "@/types/ai-provider";
+import type { CharacterRow, VideoRow } from "@/types/database";
+
+const CHARACTER_PREFIX = "character:";
 
 export async function POST(
   _request: Request,
@@ -51,6 +57,18 @@ export async function POST(
   if (spendError) return NextResponse.json({ error: spendError.message }, { status: 500 });
   if (!canSpend) return NextResponse.json({ error: "Crédits insuffisants." }, { status: 402 });
 
+  let character: CharacterRow | null = null;
+  if (settings.persona.startsWith(CHARACTER_PREFIX)) {
+    const characterId = settings.persona.slice(CHARACTER_PREFIX.length);
+    const { data } = await supabase
+      .from("ai_characters")
+      .select("*")
+      .eq("id", characterId)
+      .eq("user_id", user.id)
+      .single<CharacterRow>();
+    character = data;
+  }
+
   const { data: video, error: insertError } = await supabase
     .from("videos")
     .insert({
@@ -79,15 +97,24 @@ export async function POST(
     .from("source-videos")
     .createSignedUrl(source.source_video_url, 60 * 60);
 
+  const prompt = character
+    ? buildCharacterTransformationPrompt(character.description, settings)
+    : buildTransformationPrompt(settings);
+
   let finalVideo = video;
 
   try {
     const provider = getVideoProvider(source.provider);
-    const handle = await provider.submitJob({
+    const jobInput: GenerationJobInput = {
       sourceVideoUrl: sourceUrlData?.signedUrl ?? source.source_video_url,
       settings,
+      prompt,
       webhookUrl: `${process.env.NEXT_PUBLIC_APP_URL}/api/webhooks/generation`,
-    });
+      referenceImageUrl: character?.reference_image_url ?? undefined,
+      referenceMode: character ? "become" : "preserve",
+    };
+
+    const handle = await provider.submitJob(jobInput);
 
     const { data: updated } = await supabase
       .from("videos")

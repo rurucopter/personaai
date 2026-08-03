@@ -4,7 +4,6 @@ import type {
   GenerationJobResult,
   VideoGenerationProvider,
 } from "@/types/ai-provider";
-import { buildTransformationPrompt } from "@/lib/ai/prompt-builder";
 
 const QUEUE_BASE = "https://queue.fal.run";
 const SUBMIT_ENDPOINT_ID = "fal-ai/kling-video/o1/video-to-video/edit";
@@ -47,9 +46,9 @@ export const falProvider: VideoGenerationProvider = {
     const url = new URL(`${QUEUE_BASE}/${SUBMIT_ENDPOINT_ID}`);
     if (input.webhookUrl) url.searchParams.set("fal_webhook", input.webhookUrl);
 
-    let prompt = buildTransformationPrompt(input.settings);
+    let prompt = input.prompt;
     if (input.referenceImageUrl) {
-      prompt += " Use @Image1 as the exact reference for the person's face and identity.";
+      prompt += " Use @Image1 as the exact reference for the face shown.";
     }
 
     const res = await fetch(url.toString(), {

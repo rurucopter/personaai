@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { CreationWizard } from "@/components/create/creation-wizard";
-import type { CreditsRow } from "@/types/database";
+import type { CharacterRow, CreditsRow } from "@/types/database";
 
 export default async function CreateTransformationPage() {
   const supabase = await createClient();
@@ -8,11 +8,15 @@ export default async function CreateTransformationPage() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const { data: credits } = await supabase
-    .from("credits")
-    .select("*")
-    .eq("user_id", user!.id)
-    .single<CreditsRow>();
+  const [{ data: credits }, { data: characters }] = await Promise.all([
+    supabase.from("credits").select("*").eq("user_id", user!.id).single<CreditsRow>(),
+    supabase
+      .from("ai_characters")
+      .select("*")
+      .eq("user_id", user!.id)
+      .not("reference_image_url", "is", null)
+      .returns<CharacterRow[]>(),
+  ]);
 
   return (
     <div className="flex flex-col gap-6">
@@ -25,7 +29,7 @@ export default async function CreateTransformationPage() {
         </p>
       </div>
 
-      <CreationWizard creditBalance={credits?.balance ?? 0} />
+      <CreationWizard creditBalance={credits?.balance ?? 0} characters={characters ?? []} />
     </div>
   );
 }

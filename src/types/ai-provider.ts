@@ -29,10 +29,19 @@ export interface TransformationSettings {
 export interface GenerationJobInput {
   sourceVideoUrl: string;
   settings: TransformationSettings;
+  /** Final prompt text, built once by the caller — adapters use this as-is
+   *  rather than each re-deriving it from `settings`. */
+  prompt: string;
   webhookUrl?: string;
-  /** Still frame of the person's face, used by providers that support a
-   *  style/identity reference image to anchor generation more strongly. */
+  /** Still frame of a face, used by providers that support a style/identity
+   *  reference image. Meaning depends on referenceMode. */
   referenceImageUrl?: string;
+  /** "preserve" = referenceImageUrl is the user's own face (keep their
+   *  identity while restyling). "become" = referenceImageUrl is a fictional
+   *  AI character's face the person in the video should be replaced with.
+   *  Some providers (Aleph) must treat these very differently: anchoring a
+   *  keyframe to an unedited "preserve" frame froze the whole output. */
+  referenceMode?: "preserve" | "become";
   /** Source video pixel dimensions, so providers that require an explicit
    *  output aspect ratio (e.g. Aleph) can match the original orientation
    *  instead of defaulting to landscape and cropping a vertical clip. */

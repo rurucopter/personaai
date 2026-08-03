@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { getPersonaById } from "@/lib/personas";
 import type { TransformationSettings } from "@/types/ai-provider";
+import type { CharacterRow } from "@/types/database";
 
 interface GenerateStepProps {
   personaId: string;
@@ -14,6 +15,7 @@ interface GenerateStepProps {
   submitting: boolean;
   error: string | null;
   onGenerate: () => void;
+  characters: CharacterRow[];
 }
 
 export function GenerateStep({
@@ -24,8 +26,13 @@ export function GenerateStep({
   submitting,
   error,
   onGenerate,
+  characters,
 }: GenerateStepProps) {
-  const persona = getPersonaById(personaId);
+  const character = personaId.startsWith("character:")
+    ? characters.find((c) => `character:${c.id}` === personaId)
+    : undefined;
+  const persona = character ? undefined : getPersonaById(personaId);
+  const label = character?.name ?? persona?.label;
   const insufficientCredits = creditBalance < cost;
 
   return (
@@ -33,7 +40,7 @@ export function GenerateStep({
       <div className="rounded-xl border border-border p-6">
         <p className="mb-3 text-sm font-medium text-muted-foreground">Récapitulatif</p>
         <div className="flex flex-wrap gap-2">
-          <Badge variant="secondary">{persona?.label}</Badge>
+          <Badge variant="secondary">{label}</Badge>
           {settings.outfitStyle && <Badge variant="secondary">{settings.outfitStyle}</Badge>}
           {settings.background && <Badge variant="secondary">{settings.background}</Badge>}
           {settings.quality && <Badge variant="secondary">Qualité {settings.quality}</Badge>}

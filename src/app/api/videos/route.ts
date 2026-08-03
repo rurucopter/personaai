@@ -4,7 +4,14 @@ import { getVideoProvider } from "@/lib/ai/registry";
 import { computeGenerationCost } from "@/lib/credit-costs";
 import { isUnderGenerationRateLimit } from "@/lib/rate-limit";
 import { getPersonaById } from "@/lib/personas";
-import type { TransformationSettings } from "@/types/ai-provider";
+import {
+  buildCharacterTransformationPrompt,
+  buildTransformationPrompt,
+} from "@/lib/ai/prompt-builder";
+import type { GenerationJobInput, TransformationSettings } from "@/types/ai-provider";
+import type { CharacterRow } from "@/types/database";
+
+const CHARACTER_PREFIX = "character:";
 
 interface CreateVideoBody {
   sourceVideoPath: string;
@@ -27,9 +34,24 @@ export async function POST(request: Request) {
   }
 
   const body = (await request.json()) as CreateVideoBody;
-  const persona = getPersonaById(body.personaId);
+  const isCharacterMode = body.personaId.startsWith(CHARACTER_PREFIX);
 
-  if (!persona) {
+  let character: CharacterRow | null = null;
+
+  if (isCharacterMode) {
+    const characterId = body.personaId.slice(CHARACTER_PREFIX.length);
+    const { data } = await supabase
+      .from("ai_characters")
+      .select("*")
+      .eq("id", characterId)
+      .eq("user_id", user.id)
+      .single<CharacterRow>();
+
+    if (!data || !data.reference_image_url) {
+      return NextResponse.json({ error: "Personnage introuvable." }, { status: 400 });
+    }
+    character = data;
+  } else if (!getPersonaById(body.personaId)) {
     return NextResponse.json({ error: "Persona inconnu." }, { status: 400 });
   }
 
@@ -40,7 +62,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const settings: TransformationSettings = { ...body.settings, persona: persona.id };
+  const settings: TransformationSettings = { ...body.settings, persona: body.personaId };
   const cost = computeGenerationCost(settings);
 
   const service = createServiceRoleClient();
@@ -62,13 +84,22 @@ export async function POST(request: Request) {
     .from("source-videos")
     .createSignedUrl(body.sourceVideoPath, 60 * 60);
 
-  const referenceImageUrl = body.referenceFramePath
-    ? (
-        await supabase.storage
-          .from("video-frames")
-          .createSignedUrl(body.referenceFramePath, 60 * 60)
-      ).data?.signedUrl
-    : undefined;
+  // Character mode replaces the person, so it targets the character's own
+  // face rather than preserving the user's — the user's captured frame
+  // (if any) isn't relevant here.
+  const referenceImageUrl = character
+    ? character.reference_image_url!
+    : body.referenceFramePath
+      ? (
+          await supabase.storage
+            .from("video-frames")
+            .createSignedUrl(body.referenceFramePath, 60 * 60)
+        ).data?.signedUrl
+      : undefined;
+
+  const prompt = character
+    ? buildCharacterTransformationPrompt(character.description, body.settings)
+    : buildTransformationPrompt(settings);
 
   const { data: video, error: insertError } = await supabase
     .from("videos")
@@ -76,7 +107,7 @@ export async function POST(request: Request) {
       user_id: user.id,
       source_video_url: body.sourceVideoPath,
       source_duration_seconds: body.sourceDurationSeconds ?? null,
-      persona: persona.id,
+      persona: body.personaId,
       settings,
       provider: process.env.DEFAULT_AI_PROVIDER ?? "fal",
       status: "queued",
@@ -101,14 +132,18 @@ export async function POST(request: Request) {
 
   try {
     const provider = getVideoProvider();
-    const handle = await provider.submitJob({
+    const jobInput: GenerationJobInput = {
       sourceVideoUrl: sourceUrlData?.signedUrl ?? body.sourceVideoPath,
       settings,
+      prompt,
       webhookUrl: `${process.env.NEXT_PUBLIC_APP_URL}/api/webhooks/generation`,
       referenceImageUrl,
+      referenceMode: character ? "become" : "preserve",
       sourceWidth: body.sourceWidth,
       sourceHeight: body.sourceHeight,
-    });
+    };
+
+    const handle = await provider.submitJob(jobInput);
 
     const { data: updated } = await supabase
       .from("videos")
@@ -142,7 +177,7 @@ export async function POST(request: Request) {
     user_id: user.id,
     video_id: video.id,
     action: "generate",
-    metadata: { persona: persona.id },
+    metadata: { persona: body.personaId },
   });
 
   return NextResponse.json({ video: finalVideo });
