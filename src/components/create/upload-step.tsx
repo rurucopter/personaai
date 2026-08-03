@@ -9,6 +9,7 @@ import {
   MAX_UPLOAD_SIZE_BYTES,
   MIN_SOURCE_SECONDS,
   MIN_SOURCE_WIDTH_PX,
+  UPLOAD_CONSTRAINTS_NOTE,
 } from "@/lib/upload-constraints";
 import { upscaleVideo } from "@/lib/video-upscale";
 import { Button } from "@/components/ui/button";
@@ -120,7 +121,9 @@ export function UploadStep({ onUploaded, onReset, previewUrl }: UploadStepProps)
       return;
     }
     if (file.size > MAX_UPLOAD_SIZE_BYTES) {
-      setError("Fichier trop volumineux (200 Mo maximum).");
+      setError(
+        `Fichier trop volumineux (${(MAX_UPLOAD_SIZE_BYTES / 1024 / 1024).toFixed(0)} Mo maximum).`
+      );
       return;
     }
 
@@ -245,10 +248,7 @@ export function UploadStep({ onUploaded, onReset, previewUrl }: UploadStepProps)
         <UploadCloud className="size-8 text-muted-foreground" />
         <div>
           <p className="font-medium">Glissez-déposez votre vidéo</p>
-          <p className="text-sm text-muted-foreground">
-            MP4 ou MOV — {MIN_SOURCE_SECONDS} à {MAX_SOURCE_SECONDS} secondes, 200 Mo
-            maximum. Résolution trop faible ? On l&apos;améliore automatiquement.
-          </p>
+          <p className="text-sm text-muted-foreground">{UPLOAD_CONSTRAINTS_NOTE}</p>
         </div>
         <Button
           type="button"
