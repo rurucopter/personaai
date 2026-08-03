@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { CharacterCreator } from "@/components/character/character-creator";
+import { AvatarPicker } from "@/components/character/avatar-picker";
 import { CharacterView } from "@/components/character/character-view";
 import type { CharacterImageRow, CharacterRow } from "@/types/database";
 
@@ -40,7 +40,7 @@ export default async function CharacterPage() {
       {character ? (
         <CharacterView character={character} initialImages={images} />
       ) : (
-        <CharacterCreator />
+        <AvatarPicker />
       )}
     </div>
   );

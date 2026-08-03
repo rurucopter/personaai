@@ -1,5 +1,4 @@
 const QUEUE_BASE = "https://queue.fal.run";
-const REFERENCE_ENDPOINT = "fal-ai/flux/schnell";
 const CONSISTENT_IMAGE_ENDPOINT = "fal-ai/instant-character";
 
 function authHeaders() {
@@ -8,44 +7,20 @@ function authHeaders() {
   return { Authorization: `Key ${key}`, "Content-Type": "application/json" };
 }
 
-async function submitFalJob(
-  endpointId: string,
-  input: Record<string, unknown>,
-  webhookUrl?: string
-): Promise<string> {
-  const url = new URL(`${QUEUE_BASE}/${endpointId}`);
-  if (webhookUrl) url.searchParams.set("fal_webhook", webhookUrl);
-
-  const res = await fetch(url.toString(), {
-    method: "POST",
-    headers: authHeaders(),
-    body: JSON.stringify(input),
-  });
-
-  if (!res.ok) {
-    throw new Error(`Fal.ai submit failed: ${res.status} ${await res.text()}`);
-  }
-
-  const data = await res.json();
-  return data.request_id;
+interface FalQueueStatus {
+  status: "IN_QUEUE" | "IN_PROGRESS" | "COMPLETED";
+  request_id: string;
 }
 
-/**
- * Generates the fixed reference portrait a fictional character will be
- * kept consistent with across every later image (fal-ai/flux/schnell,
- * verified schema).
- */
-export async function submitMasterReference(
-  description: string,
-  webhookUrl?: string
-): Promise<string> {
-  const prompt = `Professional lifestyle portrait photo of ${description}. Natural lighting, photorealistic, high detail, editorial photography style.`;
+interface FalImageOutput {
+  images?: Array<{ url: string }>;
+  detail?: Array<{ msg: string }>;
+}
 
-  return submitFalJob(
-    REFERENCE_ENDPOINT,
-    { prompt, image_size: "portrait_4_3", output_format: "jpeg", num_images: 1 },
-    webhookUrl
-  );
+export interface CharacterImageJobResult {
+  status: "queued" | "processing" | "completed" | "failed";
+  imageUrl?: string;
+  errorMessage?: string;
 }
 
 /**
@@ -57,9 +32,60 @@ export async function submitCharacterImage(
   scenePrompt: string,
   webhookUrl?: string
 ): Promise<string> {
-  return submitFalJob(
-    CONSISTENT_IMAGE_ENDPOINT,
-    { image_url: referenceImageUrl, prompt: scenePrompt, image_size: "portrait_4_3", output_format: "jpeg" },
-    webhookUrl
-  );
+  const url = new URL(`${QUEUE_BASE}/${CONSISTENT_IMAGE_ENDPOINT}`);
+  if (webhookUrl?.startsWith("https://")) url.searchParams.set("fal_webhook", webhookUrl);
+
+  const res = await fetch(url.toString(), {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify({
+      image_url: referenceImageUrl,
+      prompt: scenePrompt,
+      image_size: "portrait_4_3",
+      output_format: "jpeg",
+    }),
+  });
+
+  if (!res.ok) {
+    throw new Error(`Fal.ai submit failed: ${res.status} ${await res.text()}`);
+  }
+
+  const data = await res.json();
+  return data.request_id;
+}
+
+/**
+ * Polling fallback for local dev, where fal's webhook can't reach
+ * localhost — mirrors the same pattern used for video generation.
+ */
+export async function getCharacterImageJobStatus(
+  requestId: string
+): Promise<CharacterImageJobResult> {
+  const res = await fetch(`${QUEUE_BASE}/${CONSISTENT_IMAGE_ENDPOINT}/requests/${requestId}/status`, {
+    headers: authHeaders(),
+  });
+
+  if (!res.ok) {
+    throw new Error(`Fal.ai status failed: ${res.status} ${await res.text()}`);
+  }
+
+  const data: FalQueueStatus = await res.json();
+
+  if (data.status !== "COMPLETED") {
+    return { status: data.status === "IN_QUEUE" ? "queued" : "processing" };
+  }
+
+  const resultRes = await fetch(`${QUEUE_BASE}/${CONSISTENT_IMAGE_ENDPOINT}/requests/${requestId}`, {
+    headers: authHeaders(),
+  });
+  const result: FalImageOutput = await resultRes.json();
+
+  if (!resultRes.ok || !result.images?.[0]?.url) {
+    const errorMessage =
+      result.detail?.map((d) => d.msg).join(" ") ??
+      (!resultRes.ok ? `${resultRes.status} error` : "Aucune image produite.");
+    return { status: "failed", errorMessage };
+  }
+
+  return { status: "completed", imageUrl: result.images[0].url };
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Loader2, Sparkles } from "lucide-react";
 import {
   useCharacterImages,
@@ -32,6 +32,21 @@ export function CharacterView({ character: initialCharacter, initialImages }: Ch
   const [prompt, setPrompt] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Webhooks can't reach localhost in dev, so poll pending images as a
+  // fallback — the resulting DB update flows back through realtime above.
+  useEffect(() => {
+    const pending = images.filter((img) => img.status === "queued" || img.status === "processing");
+    if (pending.length === 0) return;
+
+    const interval = setInterval(() => {
+      for (const img of pending) {
+        fetch(`/api/characters/images/${img.id}/poll`, { method: "POST" }).catch(() => {});
+      }
+    }, 4000);
+
+    return () => clearInterval(interval);
+  }, [images]);
 
   async function handleGenerate(e: React.FormEvent) {
     e.preventDefault();
