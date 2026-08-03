@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
 import { Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,9 +23,38 @@ interface VideoGalleryProps {
 }
 
 export function VideoGallery({ videos, favoriteIds }: VideoGalleryProps) {
+  const router = useRouter();
   const [search, setSearch] = useState("");
   const [personaFilter, setPersonaFilter] = useState<string>("all");
   const [favoritesOnly, setFavoritesOnly] = useState(false);
+
+  // Generation progress only auto-updates while its own page stays open
+  // (webhooks can't reach localhost, so it's poll-driven). Catch anything
+  // that finished after the user navigated away by syncing pending videos
+  // whenever this gallery is visible too.
+  const pendingIds = useMemo(
+    () => videos.filter((v) => v.status === "queued" || v.status === "processing").map((v) => v.id),
+    [videos]
+  );
+
+  useEffect(() => {
+    if (pendingIds.length === 0) return;
+
+    const interval = setInterval(async () => {
+      const results = await Promise.all(
+        pendingIds.map((id) =>
+          fetch(`/api/videos/${id}/poll`, { method: "POST" })
+            .then((res) => res.json())
+            .catch(() => null)
+        )
+      );
+      if (results.some((r) => r?.video && r.video.status !== "processing" && r.video.status !== "queued")) {
+        router.refresh();
+      }
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [pendingIds, router]);
 
   const filtered = useMemo(() => {
     return videos.filter((video) => {
