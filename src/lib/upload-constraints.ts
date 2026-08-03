@@ -20,12 +20,12 @@ const PROVIDER_CONSTRAINTS: Record<string, ProviderVideoConstraints> = {
     note: "MP4 ou MOV — 3 à 10 secondes, HD (720px minimum), 200 Mo maximum.",
   },
   runway: {
-    // Runway Gen-4 Aleph via Replicate: max 16MB, only the first 5s are used.
+    // Runway Aleph 2.0 via Replicate: 2-30 seconds, max 16MB.
     maxUploadSizeBytes: 16 * 1024 * 1024,
-    minSourceSeconds: 1,
-    maxSourceSeconds: 5,
+    minSourceSeconds: 2,
+    maxSourceSeconds: 30,
     minSourceWidthPx: 480,
-    note: "MP4 ou MOV — 5 secondes maximum (au-delà, seul le début est utilisé), 16 Mo maximum.",
+    note: "MP4 ou MOV — 2 à 30 secondes, 16 Mo maximum.",
   },
 };
 
