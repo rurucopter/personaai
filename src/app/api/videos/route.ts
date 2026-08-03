@@ -10,6 +10,8 @@ interface CreateVideoBody {
   sourceVideoPath: string;
   sourceDurationSeconds?: number;
   referenceFramePath?: string | null;
+  sourceWidth?: number;
+  sourceHeight?: number;
   personaId: string;
   settings: Omit<TransformationSettings, "persona">;
 }
@@ -104,6 +106,8 @@ export async function POST(request: Request) {
       settings,
       webhookUrl: `${process.env.NEXT_PUBLIC_APP_URL}/api/webhooks/generation`,
       referenceImageUrl,
+      sourceWidth: body.sourceWidth,
+      sourceHeight: body.sourceHeight,
     });
 
     const { data: updated } = await supabase

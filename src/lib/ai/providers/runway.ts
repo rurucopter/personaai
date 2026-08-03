@@ -10,6 +10,29 @@ const REPLICATE_API_BASE = "https://api.replicate.com/v1";
 const MODEL_OWNER = "runwayml";
 const MODEL_NAME = "gen4-aleph";
 
+const ALEPH_ASPECT_RATIOS = ["16:9", "9:16", "4:3", "3:4", "1:1", "21:9"] as const;
+
+/** Picks whichever of Aleph's fixed aspect ratios is closest to the source
+ *  video's real orientation, so a vertical phone clip doesn't get forced
+ *  into landscape and cropped. */
+function closestAspectRatio(width?: number, height?: number): (typeof ALEPH_ASPECT_RATIOS)[number] {
+  if (!width || !height) return "16:9";
+  const ratio = width / height;
+
+  const numeric: Record<(typeof ALEPH_ASPECT_RATIOS)[number], number> = {
+    "16:9": 16 / 9,
+    "9:16": 9 / 16,
+    "4:3": 4 / 3,
+    "3:4": 3 / 4,
+    "1:1": 1,
+    "21:9": 21 / 9,
+  };
+
+  return ALEPH_ASPECT_RATIOS.reduce((best, candidate) =>
+    Math.abs(numeric[candidate] - ratio) < Math.abs(numeric[best] - ratio) ? candidate : best
+  );
+}
+
 function authHeaders() {
   const token = process.env.REPLICATE_API_TOKEN;
   if (!token) throw new Error("REPLICATE_API_TOKEN is not set");
@@ -46,6 +69,7 @@ export const runwayProvider: VideoGenerationProvider = {
           input: {
             video: input.sourceVideoUrl,
             prompt: buildTransformationPrompt(input.settings),
+            aspect_ratio: closestAspectRatio(input.sourceWidth, input.sourceHeight),
             ...(input.referenceImageUrl ? { reference_image: input.referenceImageUrl } : {}),
           },
           webhook: input.webhookUrl,

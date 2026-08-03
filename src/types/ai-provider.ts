@@ -33,6 +33,11 @@ export interface GenerationJobInput {
   /** Still frame of the person's face, used by providers that support a
    *  style/identity reference image to anchor generation more strongly. */
   referenceImageUrl?: string;
+  /** Source video pixel dimensions, so providers that require an explicit
+   *  output aspect ratio (e.g. Aleph) can match the original orientation
+   *  instead of defaulting to landscape and cropping a vertical clip. */
+  sourceWidth?: number;
+  sourceHeight?: number;
 }
 
 export interface GenerationJobHandle {

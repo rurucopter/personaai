@@ -4,7 +4,7 @@ import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { StepIndicator } from "@/components/create/step-indicator";
-import { UploadStep } from "@/components/create/upload-step";
+import { UploadStep, type UploadedVideoMeta } from "@/components/create/upload-step";
 import { PersonaStep } from "@/components/create/persona-step";
 import { CustomizeStep } from "@/components/create/customize-step";
 import { GenerateStep } from "@/components/create/generate-step";
@@ -26,6 +26,9 @@ export function CreationWizard({ creditBalance }: { creditBalance: number }) {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [durationSeconds, setDurationSeconds] = useState<number | null>(null);
   const [referenceFramePath, setReferenceFramePath] = useState<string | null>(null);
+  const [sourceDimensions, setSourceDimensions] = useState<{ width: number; height: number } | null>(
+    null
+  );
   const [personaId, setPersonaId] = useState<string | null>(null);
   const [settings, setSettings] =
     useState<Omit<TransformationSettings, "persona">>(DEFAULT_SETTINGS);
@@ -53,6 +56,8 @@ export function CreationWizard({ creditBalance }: { creditBalance: number }) {
           sourceVideoPath,
           sourceDurationSeconds: durationSeconds,
           referenceFramePath,
+          sourceWidth: sourceDimensions?.width,
+          sourceHeight: sourceDimensions?.height,
           personaId,
           settings,
         }),
@@ -90,17 +95,19 @@ export function CreationWizard({ creditBalance }: { creditBalance: number }) {
           {step === 1 && (
             <UploadStep
               previewUrl={previewUrl}
-              onUploaded={(path, duration, preview, framePath) => {
-                setSourceVideoPath(path);
-                setDurationSeconds(duration);
-                setPreviewUrl(preview);
-                setReferenceFramePath(framePath);
+              onUploaded={(meta: UploadedVideoMeta) => {
+                setSourceVideoPath(meta.path);
+                setDurationSeconds(meta.durationSeconds);
+                setPreviewUrl(meta.previewUrl);
+                setReferenceFramePath(meta.referenceFramePath);
+                setSourceDimensions({ width: meta.width, height: meta.height });
               }}
               onReset={() => {
                 setSourceVideoPath(null);
                 setPreviewUrl(null);
                 setDurationSeconds(null);
                 setReferenceFramePath(null);
+                setSourceDimensions(null);
               }}
             />
           )}

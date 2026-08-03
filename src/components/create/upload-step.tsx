@@ -16,13 +16,17 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 
+export interface UploadedVideoMeta {
+  path: string;
+  durationSeconds: number;
+  previewUrl: string;
+  referenceFramePath: string | null;
+  width: number;
+  height: number;
+}
+
 interface UploadStepProps {
-  onUploaded: (
-    path: string,
-    durationSeconds: number,
-    previewUrl: string,
-    referenceFramePath: string | null
-  ) => void;
+  onUploaded: (meta: UploadedVideoMeta) => void;
   onReset: () => void;
   previewUrl: string | null;
 }
@@ -199,7 +203,14 @@ export function UploadStep({ onUploaded, onReset, previewUrl }: UploadStepProps)
         if (!frameUploadError) referenceFramePath = framePath;
       }
 
-      onUploaded(path, duration, localUrl, referenceFramePath);
+      onUploaded({
+        path,
+        durationSeconds: duration,
+        previewUrl: localUrl,
+        referenceFramePath,
+        width,
+        height,
+      });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erreur lors de l'import.");
     } finally {
