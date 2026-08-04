@@ -29,6 +29,12 @@ const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const IMPERFECTION_SUFFIX =
   "Candid, unretouched phone-camera snapshot look, not a studio shoot. Real, natural skin with visible pores, faint texture, and very subtle asymmetry in the face — not airbrushed or flawless. A couple of small natural imperfections like a faint freckle or slightly uneven eyebrows. Natural, slightly imperfect hair with a few flyaway strands. Avoid a symmetrical, overly smooth, or synthetic AI-generated look.";
 
+// Stronger version for the "ordinary person" avatars: explicitly steers
+// away from model-like/conventionally-attractive output, which is exactly
+// what reads as synthetic. Real photos of real people are rarely that.
+const ORDINARY_PERSON_SUFFIX =
+  "This is an ordinary, average-looking real person, not a model or influencer — plain, unremarkable, everyday features. Candid unretouched phone snapshot, bad indoor lighting is fine, slightly imperfect framing. Real skin texture with visible pores, blemishes, uneven tone, redness, or blotchiness. Natural facial asymmetry, imperfect teeth alignment, tired or plain expression is fine — do not make this person look conventionally attractive, glamorous, or like a professional model. Avoid symmetry, smoothness, or any polished/synthetic AI look.";
+
 const TEMPLATES = [
   {
     id: "blonde-lifestyle",
@@ -39,6 +45,26 @@ const TEMPLATES = [
     id: "brunette-lifestyle",
     prompt:
       `Candid lifestyle photo of a natural-looking 27 year old brunette woman with sleek shoulder-length hair, confident warm expression, chic urban style, Parisian city lifestyle setting. Natural lighting, photorealistic. ${IMPERFECTION_SUFFIX}`,
+  },
+  {
+    id: "curly-everyday",
+    prompt:
+      `Casual phone selfie of a 34 year old woman with curly chestnut mid-length hair, no makeup, ordinary everyday appearance, plain indoor or outdoor background, photorealistic. ${ORDINARY_PERSON_SUFFIX}`,
+  },
+  {
+    id: "round-face-casual",
+    prompt:
+      `Casual phone selfie of a 41 year old woman with straight chestnut mid-length hair, round face, slightly crooked smile, visible expression lines, simple everyday clothing, photorealistic. ${ORDINARY_PERSON_SUFFIX}`,
+  },
+  {
+    id: "redhead-freckles",
+    prompt:
+      `Casual phone selfie of a 23 year old redhead woman with slightly messy mid-length hair, heavy freckles across the face, slightly uneven teeth, no makeup, student-casual style, photorealistic. ${ORDINARY_PERSON_SUFFIX}`,
+  },
+  {
+    id: "short-hair-natural",
+    prompt:
+      `Casual phone selfie of a 29 year old woman with short straight black hair, tan skin, relaxed neutral expression, plain casual clothing, photorealistic. ${ORDINARY_PERSON_SUFFIX}`,
   },
 ];
 
