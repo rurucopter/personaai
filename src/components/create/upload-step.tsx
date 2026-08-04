@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { UploadCloud, X } from "lucide-react";
+import { Link2, Loader2, UploadCloud, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import {
   isAcceptedVideoFile,
@@ -13,7 +13,9 @@ import {
 } from "@/lib/upload-constraints";
 import { upscaleVideo } from "@/lib/video-upscale";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 
 export interface UploadedVideoMeta {
@@ -38,7 +40,42 @@ export function UploadStep({ onUploaded, onReset, previewUrl }: UploadStepProps)
   const [phase, setPhase] = useState<Phase>("idle");
   const [upscaleProgress, setUpscaleProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [tiktokUrl, setTiktokUrl] = useState("");
+  const [tiktokLoading, setTiktokLoading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  async function handleTikTokImport(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+    setTiktokLoading(true);
+
+    try {
+      const res = await fetch("/api/videos/import-tiktok", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: tiktokUrl.trim() }),
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.error ?? "Erreur lors de l'import.");
+        return;
+      }
+
+      onUploaded({
+        path: data.path,
+        durationSeconds: data.durationSeconds,
+        previewUrl: data.previewUrl,
+        referenceFramePath: data.referenceFramePath,
+        width: data.width,
+        height: data.height,
+      });
+    } catch {
+      setError("Erreur lors de l'import.");
+    } finally {
+      setTiktokLoading(false);
+    }
+  }
 
   function sanitizeFileName(name: string): string {
     const dotIndex = name.lastIndexOf(".");
@@ -239,54 +276,91 @@ export function UploadStep({ onUploaded, onReset, previewUrl }: UploadStepProps)
 
   return (
     <div className="flex flex-col gap-3">
-      <div
-        className={cn(
-          "flex flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed border-border p-12 text-center transition-colors",
-          dragging && "border-primary bg-secondary/40"
-        )}
-        onDragOver={(e) => {
-          e.preventDefault();
-          setDragging(true);
-        }}
-        onDragLeave={() => setDragging(false)}
-        onDrop={(e) => {
-          e.preventDefault();
-          setDragging(false);
-          const file = e.dataTransfer.files[0];
-          if (file) handleFile(file);
-        }}
-      >
-        <UploadCloud className="size-8 text-muted-foreground" />
-        <div>
-          <p className="font-medium">Glissez-déposez votre vidéo</p>
-          <p className="text-sm text-muted-foreground">{UPLOAD_CONSTRAINTS_NOTE}</p>
-        </div>
-        <Button
-          type="button"
-          variant="outline"
-          disabled={phase !== "idle"}
-          onClick={() => inputRef.current?.click()}
-        >
-          {phase === "upscaling"
-            ? "Amélioration de la qualité..."
-            : phase === "uploading"
-              ? "Import en cours..."
-              : "Parcourir"}
-        </Button>
-        <input
-          ref={inputRef}
-          type="file"
-          accept="video/mp4,video/quicktime"
-          className="hidden"
-          onChange={(e) => {
-            const file = e.target.files?.[0];
-            if (file) handleFile(file);
-          }}
-        />
-      </div>
+      <Tabs defaultValue="file">
+        <TabsList>
+          <TabsTrigger value="file">Fichier</TabsTrigger>
+          <TabsTrigger value="tiktok">Lien TikTok</TabsTrigger>
+        </TabsList>
 
-      {phase === "upscaling" && <Progress value={upscaleProgress * 100} />}
-      {phase === "uploading" && <Progress value={null} className="animate-pulse" />}
+        <TabsContent value="file">
+          <div
+            className={cn(
+              "flex flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed border-border p-12 text-center transition-colors",
+              dragging && "border-primary bg-secondary/40"
+            )}
+            onDragOver={(e) => {
+              e.preventDefault();
+              setDragging(true);
+            }}
+            onDragLeave={() => setDragging(false)}
+            onDrop={(e) => {
+              e.preventDefault();
+              setDragging(false);
+              const file = e.dataTransfer.files[0];
+              if (file) handleFile(file);
+            }}
+          >
+            <UploadCloud className="size-8 text-muted-foreground" />
+            <div>
+              <p className="font-medium">Glissez-déposez votre vidéo</p>
+              <p className="text-sm text-muted-foreground">{UPLOAD_CONSTRAINTS_NOTE}</p>
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={phase !== "idle"}
+              onClick={() => inputRef.current?.click()}
+            >
+              {phase === "upscaling"
+                ? "Amélioration de la qualité..."
+                : phase === "uploading"
+                  ? "Import en cours..."
+                  : "Parcourir"}
+            </Button>
+            <input
+              ref={inputRef}
+              type="file"
+              accept="video/mp4,video/quicktime"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) handleFile(file);
+              }}
+            />
+          </div>
+
+          {phase === "upscaling" && <Progress value={upscaleProgress * 100} />}
+          {phase === "uploading" && <Progress value={null} className="animate-pulse" />}
+        </TabsContent>
+
+        <TabsContent value="tiktok">
+          <form
+            onSubmit={handleTikTokImport}
+            className="flex flex-col items-center justify-center gap-4 rounded-xl border-2 border-dashed border-border p-12 text-center"
+          >
+            <Link2 className="size-8 text-muted-foreground" />
+            <div>
+              <p className="font-medium">Coller un lien TikTok</p>
+              <p className="text-sm text-muted-foreground">
+                La vidéo doit être publique. {UPLOAD_CONSTRAINTS_NOTE}
+              </p>
+            </div>
+            <div className="flex w-full max-w-sm gap-2">
+              <Input
+                value={tiktokUrl}
+                onChange={(e) => setTiktokUrl(e.target.value)}
+                placeholder="https://www.tiktok.com/@.../video/..."
+                disabled={tiktokLoading}
+                required
+              />
+              <Button type="submit" disabled={tiktokLoading}>
+                {tiktokLoading ? <Loader2 className="size-4 animate-spin" /> : "Importer"}
+              </Button>
+            </div>
+          </form>
+        </TabsContent>
+      </Tabs>
+
       {error && <p className="text-sm text-destructive">{error}</p>}
     </div>
   );
