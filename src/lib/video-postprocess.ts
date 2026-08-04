@@ -5,12 +5,27 @@ import { join } from "node:path";
 import ffmpegPath from "ffmpeg-static";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 
+// Adaptive grain: adds noticeably more grain to already-smooth regions
+// (the over-airbrushed skin AI models produce) and much less to areas that
+// already have real detail (hair, edges, background) — avoids the "grain
+// smeared uniformly over everything, including things that were already
+// textured" look of a flat noise filter, and avoids graining texture-y
+// background objects (e.g. a wood-toned wall) that a naive skin-color mask
+// would misfire on. Built from local-detail (blur-difference) analysis,
+// not face detection, so it works on any framing.
+const ADAPTIVE_GRAIN_FILTER =
+  "[0:v]format=rgb24,split=4[orig1][orig2][orig3][orig4];" +
+  "[orig1]gblur=sigma=10[blurred];" +
+  "[orig2][blurred]blend=all_mode=difference,format=gray,eq=contrast=8:brightness=0.25,negate[smoothmask];" +
+  "[orig3]noise=alls=45:allf=t+u[noisy];" +
+  "[orig4][noisy][smoothmask]maskedmerge,eq=contrast=1.02:saturation=0.98[out]";
+
 /**
- * Overlays subtle film grain/noise on a generated video. AI video models
- * consistently over-smooth skin no matter how the prompt is worded — that's
- * a model bias, not something text can fully override. This is the one
- * reliable fix: it doesn't depend on the model's behavior at all, since it
- * runs on the output afterward.
+ * Overlays film grain/noise on a generated video, concentrated on smooth
+ * (skin-like) regions. AI video models consistently over-smooth skin no
+ * matter how the prompt is worded — that's a model bias, not something text
+ * can fully override. This is the one reliable fix: it doesn't depend on
+ * the model's behavior at all, since it runs on the output afterward.
  */
 export async function addFilmGrain(videoBuffer: Buffer): Promise<Buffer> {
   const dir = await mkdtemp(join(tmpdir(), "personaai-grain-"));
@@ -25,8 +40,12 @@ export async function addFilmGrain(videoBuffer: Buffer): Promise<Buffer> {
         "-y",
         "-i",
         inputPath,
-        "-vf",
-        "noise=alls=12:allf=t+u,eq=contrast=1.02:saturation=0.98",
+        "-filter_complex",
+        ADAPTIVE_GRAIN_FILTER,
+        "-map",
+        "[out]",
+        "-map",
+        "0:a?",
         "-c:v",
         "libx264",
         "-preset",
