@@ -6,7 +6,11 @@ import { Loader2 } from "lucide-react";
 import { AVATAR_TEMPLATES } from "@/lib/avatar-templates";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-export function AvatarPicker() {
+interface AvatarPickerProps {
+  title?: string;
+}
+
+export function AvatarPicker({ title = "Choisissez votre avatar" }: AvatarPickerProps) {
   const router = useRouter();
   const [loadingId, setLoadingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -28,6 +32,7 @@ export function AvatarPicker() {
         return;
       }
 
+      router.push(`/dashboard/character?character=${data.character.id}`);
       router.refresh();
     } finally {
       setLoadingId(null);
@@ -37,7 +42,7 @@ export function AvatarPicker() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">Choisissez votre avatar</CardTitle>
+        <CardTitle className="text-base">{title}</CardTitle>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">

@@ -1,7 +1,12 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { downloadVideoFromUrl } from "@/lib/tiktok-import";
-import { grabFrameServer, probeVideo, upscaleVideoServer } from "@/lib/video-server-utils";
+import {
+  grabFrameServer,
+  probeVideo,
+  trimVideoServer,
+  upscaleVideoServer,
+} from "@/lib/video-server-utils";
 import {
   MAX_SOURCE_SECONDS,
   MAX_UPLOAD_SIZE_BYTES,
@@ -30,6 +35,7 @@ export async function POST(request: Request) {
   try {
     video = await downloadVideoFromUrl(body.url.trim());
   } catch (err) {
+    console.error("TikTok import failed:", err);
     return NextResponse.json(
       {
         error:
@@ -48,7 +54,7 @@ export async function POST(request: Request) {
 
   const meta = await probeVideo(video);
 
-  if (meta.durationSeconds < MIN_SOURCE_SECONDS || meta.durationSeconds > MAX_SOURCE_SECONDS) {
+  if (meta.durationSeconds < MIN_SOURCE_SECONDS) {
     return NextResponse.json(
       {
         error: `Durée non supportée (${meta.durationSeconds.toFixed(1)}s). Il faut une vidéo de ${MIN_SOURCE_SECONDS} à ${MAX_SOURCE_SECONDS} secondes.`,
@@ -58,11 +64,29 @@ export async function POST(request: Request) {
   }
 
   let finalVideo = video;
+  let durationSeconds = meta.durationSeconds;
   let { width, height } = meta;
+
+  // TikTok clips routinely run a bit past the active provider's max —
+  // trim to fit instead of rejecting the import outright.
+  if (durationSeconds > MAX_SOURCE_SECONDS) {
+    try {
+      finalVideo = await trimVideoServer(finalVideo, MAX_SOURCE_SECONDS);
+      const trimmedMeta = await probeVideo(finalVideo);
+      durationSeconds = trimmedMeta.durationSeconds;
+      width = trimmedMeta.width;
+      height = trimmedMeta.height;
+    } catch {
+      return NextResponse.json(
+        { error: "Impossible d'ajuster automatiquement la durée de cette vidéo." },
+        { status: 422 }
+      );
+    }
+  }
 
   if (Math.min(width, height) < MIN_SOURCE_WIDTH_PX) {
     try {
-      finalVideo = await upscaleVideoServer(video, MIN_SOURCE_WIDTH_PX);
+      finalVideo = await upscaleVideoServer(finalVideo, MIN_SOURCE_WIDTH_PX);
       const upscaledMeta = await probeVideo(finalVideo);
       width = upscaledMeta.width;
       height = upscaledMeta.height;
@@ -94,7 +118,7 @@ export async function POST(request: Request) {
 
   let referenceFramePath: string | null = null;
   try {
-    const frame = await grabFrameServer(finalVideo, meta.durationSeconds / 2);
+    const frame = await grabFrameServer(finalVideo, durationSeconds / 2);
     const framePath = `${user.id}/${timestamp}-frame.jpg`;
     const { error: frameUploadError } = await supabase.storage
       .from("video-frames")
@@ -110,7 +134,7 @@ export async function POST(request: Request) {
 
   return NextResponse.json({
     path: videoPath,
-    durationSeconds: meta.durationSeconds,
+    durationSeconds,
     width,
     height,
     referenceFramePath,

@@ -96,6 +96,41 @@ export async function grabFrameServer(videoBuffer: Buffer, atSeconds: number): P
   }
 }
 
+/** Trims a video down to `maxSeconds` from the start — used when an imported
+ *  video (e.g. from TikTok) exceeds the active provider's max duration. */
+export async function trimVideoServer(videoBuffer: Buffer, maxSeconds: number): Promise<Buffer> {
+  const dir = await mkdtemp(join(tmpdir(), "personaai-trim-"));
+  const inputPath = join(dir, "input.mp4");
+  const outputPath = join(dir, "output.mp4");
+
+  try {
+    await writeFile(inputPath, videoBuffer);
+
+    await runFfmpeg([
+      "-y",
+      "-i",
+      inputPath,
+      // Small safety margin below the hard limit — re-encoding otherwise
+      // occasionally lands a few frames over the target duration.
+      "-t",
+      String(Math.max(0, maxSeconds - 0.15)),
+      "-c:v",
+      "libx264",
+      "-preset",
+      "veryfast",
+      "-crf",
+      "20",
+      "-c:a",
+      "aac",
+      outputPath,
+    ]);
+
+    return await readFile(outputPath);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+}
+
 /** Upscales a video so its shortest side reaches `minShortSide` — server-side
  *  equivalent of the client's ffmpeg.wasm upscale used during file upload. */
 export async function upscaleVideoServer(videoBuffer: Buffer, minShortSide: number): Promise<Buffer> {

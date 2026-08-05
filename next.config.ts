@@ -8,6 +8,9 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  // These bundle static binary paths relative to __dirname; Turbopack's
+  // Server Components bundling breaks that resolution, so keep them external.
+  serverExternalPackages: ["ffmpeg-static", "ffprobe-static"],
   async headers() {
     return [
       {
