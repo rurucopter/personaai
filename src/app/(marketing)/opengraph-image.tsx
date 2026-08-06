@@ -14,23 +14,27 @@ export default function OpengraphImage() {
           flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
-          backgroundColor: "#09090b",
+          backgroundImage:
+            "radial-gradient(circle at 50% 30%, #2a0f3d 0%, #0a0710 55%, #060509 100%)",
           color: "#fafafa",
         }}
       >
-        <div style={{ fontSize: 32, letterSpacing: 4, color: "#a1a1aa" }}>
+        <div style={{ display: "flex", fontSize: 32, letterSpacing: 4, color: "#c98bf5" }}>
           PERSONAAI
         </div>
         <div
           style={{
+            display: "flex",
             marginTop: 24,
-            fontSize: 64,
-            fontWeight: 600,
+            fontSize: 60,
+            fontWeight: 800,
+            textTransform: "uppercase",
+            letterSpacing: -1,
             textAlign: "center",
-            maxWidth: 900,
+            maxWidth: 950,
           }}
         >
-          Devenez n&apos;importe qui, en restant vous-même.
+          Importez-vous. Transformez-vous. Devenez-le.
         </div>
       </div>
     ),

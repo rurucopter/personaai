@@ -1,4 +1,5 @@
 import { Hero } from "@/components/marketing/hero";
+import { TrustBar } from "@/components/marketing/trust-bar";
 import { Features } from "@/components/marketing/features";
 import { HowItWorks } from "@/components/marketing/how-it-works";
 import { BeforeAfter } from "@/components/marketing/before-after";
@@ -11,6 +12,7 @@ export default function HomePage() {
   return (
     <>
       <Hero />
+      <TrustBar />
       <Features />
       <HowItWorks />
       <BeforeAfter />

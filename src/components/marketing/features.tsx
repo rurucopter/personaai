@@ -1,4 +1,5 @@
 import { Fingerprint, Sparkles, Wand2 } from "lucide-react";
+import { Reveal } from "@/components/marketing/reveal";
 
 const FEATURES = [
   {
@@ -24,15 +25,19 @@ const FEATURES = [
 export function Features() {
   return (
     <section className="mx-auto max-w-6xl px-6 py-20">
-      <div className="grid grid-cols-1 gap-8 sm:grid-cols-3">
-        {FEATURES.map(({ icon: Icon, title, description }) => (
-          <div key={title} className="flex flex-col gap-3">
-            <div className="flex size-10 items-center justify-center rounded-lg bg-secondary">
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
+        {FEATURES.map(({ icon: Icon, title, description }, i) => (
+          <Reveal
+            key={title}
+            delay={i * 0.1}
+            className="group flex flex-col gap-3 rounded-2xl border border-white/10 bg-white/[0.02] p-6 transition-colors hover:border-brand/40 hover:bg-white/[0.04]"
+          >
+            <div className="flex size-11 items-center justify-center rounded-xl bg-gradient-to-br from-brand to-brand-2 text-white shadow-[0_8px_24px_-8px_var(--brand)] transition-transform group-hover:scale-110">
               <Icon className="size-5" />
             </div>
             <h3 className="font-medium">{title}</h3>
             <p className="text-sm text-muted-foreground">{description}</p>
-          </div>
+          </Reveal>
         ))}
       </div>
     </section>

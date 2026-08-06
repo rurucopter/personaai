@@ -1,3 +1,5 @@
+import { Reveal } from "@/components/marketing/reveal";
+
 const STEPS = [
   {
     number: "01",
@@ -23,24 +25,37 @@ const STEPS = [
 
 export function HowItWorks() {
   return (
-    <section id="fonctionnement" className="mx-auto max-w-6xl px-6 py-20">
-      <div className="mb-12 flex flex-col gap-3 text-center">
-        <h2 className="text-3xl font-semibold tracking-tight">Comment ça marche</h2>
-        <p className="text-muted-foreground">
-          Quatre étapes, quelques minutes, un résultat bluffant.
-        </p>
-      </div>
+    <section id="fonctionnement" className="border-t border-white/10 bg-white/[0.015]">
+      <div className="mx-auto max-w-6xl px-6 py-24">
+        <Reveal className="mb-14 flex flex-col items-center gap-3 text-center">
+          <span className="text-xs font-medium tracking-widest text-brand uppercase">
+            Le processus
+          </span>
+          <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">
+            Comment ça marche
+          </h2>
+          <p className="text-muted-foreground">
+            Quatre étapes, quelques minutes, un résultat bluffant.
+          </p>
+        </Reveal>
 
-      <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
-        {STEPS.map((step) => (
-          <div key={step.number} className="flex flex-col gap-2">
-            <span className="text-sm font-medium text-muted-foreground">
-              {step.number}
-            </span>
-            <h3 className="font-medium">{step.title}</h3>
-            <p className="text-sm text-muted-foreground">{step.description}</p>
-          </div>
-        ))}
+        <div className="grid grid-cols-1 gap-x-8 gap-y-10 sm:grid-cols-2 lg:grid-cols-4">
+          {STEPS.map((step, i) => (
+            <Reveal key={step.number} delay={i * 0.08} className="relative flex flex-col gap-2">
+              <span className="bg-gradient-to-r from-brand to-brand-2 bg-clip-text text-3xl font-black text-transparent">
+                {step.number}
+              </span>
+              <h3 className="font-medium">{step.title}</h3>
+              <p className="text-sm text-muted-foreground">{step.description}</p>
+              {i < STEPS.length - 1 && (
+                <span
+                  aria-hidden
+                  className="absolute top-4 -right-4 hidden h-px w-8 bg-gradient-to-r from-white/20 to-transparent lg:block"
+                />
+              )}
+            </Reveal>
+          ))}
+        </div>
       </div>
     </section>
   );

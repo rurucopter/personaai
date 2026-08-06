@@ -4,23 +4,24 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { ArrowRight, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { BrowserMockup } from "@/components/marketing/browser-mockup";
 
 export function Hero() {
   return (
     <section className="relative overflow-hidden">
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[600px] bg-[radial-gradient(ellipse_60%_50%_at_50%_0%,color-mix(in_oklch,var(--primary),transparent_85%),transparent)]"
+        className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[700px] bg-[radial-gradient(ellipse_60%_50%_at_50%_0%,color-mix(in_oklch,var(--brand),transparent_82%),transparent)]"
       />
 
-      <div className="mx-auto flex max-w-4xl flex-col items-center gap-6 px-6 pt-28 pb-20 text-center">
+      <div className="mx-auto flex max-w-5xl flex-col items-center gap-6 px-6 pt-28 pb-16 text-center">
         <motion.div
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4 }}
-          className="flex items-center gap-2 rounded-full border border-border bg-secondary/50 px-4 py-1.5 text-sm text-muted-foreground"
+          className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-1.5 text-sm text-muted-foreground"
         >
-          <Sparkles className="size-3.5" />
+          <Sparkles className="size-3.5 text-brand" />
           Propulsé par l&apos;IA vidéo générative
         </motion.div>
 
@@ -28,11 +29,15 @@ export function Hero() {
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.05 }}
-          className="text-4xl font-semibold tracking-tight sm:text-6xl"
+          className="text-4xl leading-[1.05] font-black tracking-tight uppercase sm:text-6xl md:text-7xl"
         >
-          Devenez n&apos;importe qui,
+          Importez-vous.
           <br />
-          en restant vous-même.
+          <span className="bg-gradient-to-r from-brand to-brand-2 bg-clip-text text-transparent">
+            Transformez-vous.
+          </span>
+          <br />
+          Devenez-le.
         </motion.h1>
 
         <motion.p
@@ -54,7 +59,7 @@ export function Hero() {
         >
           <Button
             size="lg"
-            className="gap-2"
+            className="gap-2 shadow-[0_8px_30px_-8px_var(--brand)]"
             render={<Link href="/signup" />}
             nativeButton={false}
           >
@@ -70,6 +75,10 @@ export function Hero() {
             Voir comment ça marche
           </Button>
         </motion.div>
+      </div>
+
+      <div className="px-6 pb-24">
+        <BrowserMockup />
       </div>
     </section>
   );
