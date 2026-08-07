@@ -47,10 +47,13 @@ export async function upscaleVideo(
     scaleFilter,
     "-c:v",
     "libx264",
+    // ultrafast (vs veryfast) roughly halves the in-browser WASM encode time;
+    // this is only a source video the AI re-processes anyway, so the small
+    // quality/size tradeoff is well worth the speedup.
     "-preset",
-    "veryfast",
+    "ultrafast",
     "-crf",
-    "20",
+    "23",
     "-c:a",
     "aac",
     outputName,

@@ -215,13 +215,19 @@ export function UploadStep({ onUploaded, onReset, previewUrl }: UploadStepProps)
         return;
       }
 
-      const path = `${user.id}/${Date.now()}-${sanitizeFileName(fileToUpload.name)}`;
-      const { error: uploadError } = await supabase.storage
-        .from("source-videos")
-        .upload(path, fileToUpload);
+      const timestamp = Date.now();
+      const path = `${user.id}/${timestamp}-${sanitizeFileName(fileToUpload.name)}`;
 
-      if (uploadError) {
-        setError(uploadError.message);
+      // Grab the reference frame while the (larger) video uploads rather than
+      // after it — the canvas decode overlaps the network transfer instead of
+      // adding on top of it, shaving noticeable time off every import.
+      const [uploadResult, frameBlob] = await Promise.all([
+        supabase.storage.from("source-videos").upload(path, fileToUpload),
+        grabFrame(fileToUpload, duration / 2),
+      ]);
+
+      if (uploadResult.error) {
+        setError(uploadResult.error.message);
         return;
       }
 
@@ -229,10 +235,8 @@ export function UploadStep({ onUploaded, onReset, previewUrl }: UploadStepProps)
       // the video, lets the AI anchor identity more strongly. Not fatal if
       // it fails — generation still works from the video alone.
       let referenceFramePath: string | null = null;
-      const frameBlob = await grabFrame(fileToUpload, duration / 2);
-
       if (frameBlob) {
-        const framePath = `${user.id}/${Date.now()}-frame.jpg`;
+        const framePath = `${user.id}/${timestamp}-frame.jpg`;
         const { error: frameUploadError } = await supabase.storage
           .from("video-frames")
           .upload(framePath, frameBlob, { contentType: "image/jpeg" });
