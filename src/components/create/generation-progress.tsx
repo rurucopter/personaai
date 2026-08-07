@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { CheckCircle2, XCircle } from "lucide-react";
 import { useVideoProgress } from "@/hooks/use-video-progress";
 import { Button } from "@/components/ui/button";
@@ -16,20 +16,45 @@ const STATUS_LABEL: Record<VideoRow["status"], string> = {
   cancelled: "Annulé",
 };
 
+function formatElapsed(seconds: number): string {
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return `${m}:${s.toString().padStart(2, "0")}`;
+}
+
 export function GenerationProgress({ initialVideo }: { initialVideo: VideoRow }) {
   const video = useVideoProgress(initialVideo);
+  const [now, setNow] = useState(() => Date.now());
+
+  const isPending = video.status === "queued" || video.status === "processing";
 
   // Webhooks can't reach localhost in dev, so poll as a fallback — the
   // resulting DB update flows back through the realtime subscription above.
   useEffect(() => {
-    if (video.status !== "queued" && video.status !== "processing") return;
+    if (!isPending) return;
 
     const interval = setInterval(() => {
       fetch(`/api/videos/${video.id}/poll`, { method: "POST" }).catch(() => {});
     }, 4000);
 
     return () => clearInterval(interval);
-  }, [video.id, video.status]);
+  }, [video.id, isPending]);
+
+  // Tick every second so the elapsed time and estimated progress advance —
+  // the provider doesn't report granular progress, so without this the bar
+  // would sit frozen and a slow-but-healthy job looks indistinguishable
+  // from a stuck one.
+  useEffect(() => {
+    if (!isPending) return;
+    const t = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(t);
+  }, [isPending]);
+
+  const elapsedSec = Math.max(0, Math.floor((now - new Date(video.created_at).getTime()) / 1000));
+  // Ease asymptotically toward ~92% over a few minutes; real completion snaps
+  // it to 100%. Uses the provider's own progress if it ever reports higher.
+  const estimated = Math.round(92 * (1 - Math.exp(-elapsedSec / 130)));
+  const displayProgress = Math.max(video.progress || 0, estimated);
 
   if (video.status === "completed") {
     return (
@@ -64,10 +89,16 @@ export function GenerationProgress({ initialVideo }: { initialVideo: VideoRow })
 
   return (
     <div className="flex flex-col gap-4 rounded-xl border border-border p-10 text-center">
-      <p className="font-medium">{STATUS_LABEL[video.status]}</p>
-      <Progress value={video.progress || null} />
+      <div className="flex items-center justify-center gap-3">
+        <p className="font-medium">{STATUS_LABEL[video.status]}</p>
+        <span className="text-sm tabular-nums text-muted-foreground">
+          {formatElapsed(elapsedSec)}
+        </span>
+      </div>
+      <Progress value={displayProgress} />
       <p className="text-sm text-muted-foreground">
-        Vous pouvez quitter cette page, la génération continue en arrière-plan.
+        La génération prend généralement 2 à 5 minutes. Vous pouvez quitter
+        cette page, elle continue en arrière-plan.
       </p>
     </div>
   );

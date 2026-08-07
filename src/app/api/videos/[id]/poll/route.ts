@@ -4,6 +4,12 @@ import { getVideoProvider } from "@/lib/ai/registry";
 import { postprocessResultVideo } from "@/lib/video-postprocess";
 import type { VideoRow } from "@/types/database";
 
+// Hard ceiling on how long a job may sit in queued/processing. Kling and
+// Runway realistically finish within a few minutes; well past that the job
+// has almost certainly died provider-side without ever reporting failure, so
+// we stop waiting, refund, and let the user retry instead of hanging forever.
+const MAX_GENERATION_MINUTES = 12;
+
 /**
  * Fallback for local dev, where the provider's webhook can't reach
  * localhost: actively polls the provider for job status and syncs the DB.
@@ -54,22 +60,48 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
   }
 
   if (result.status === "failed" || result.status === "cancelled") {
-    const { data: updated } = await supabase
-      .from("videos")
-      .update({ status: "failed", error_message: result.errorMessage ?? "La génération a échoué." })
-      .eq("id", video.id)
-      .select()
-      .single();
+    return failAndRefund(
+      supabase,
+      user.id,
+      video,
+      result.errorMessage ?? "La génération a échoué."
+    );
+  }
 
-    const service = createServiceRoleClient();
-    await service.rpc("refund_credits", {
-      p_user_id: user.id,
-      p_amount: video.credits_spent,
-      p_video_id: video.id,
-    });
-
-    return NextResponse.json({ video: updated ?? video });
+  // Still queued/processing: enforce the hard timeout so a silently-dead job
+  // can't leave the user staring at an endless "Génération en cours".
+  const minutesElapsed = (Date.now() - new Date(video.created_at).getTime()) / 60000;
+  if (minutesElapsed > MAX_GENERATION_MINUTES) {
+    return failAndRefund(
+      supabase,
+      user.id,
+      video,
+      "La génération a expiré. Vos crédits ont été remboursés, réessayez."
+    );
   }
 
   return NextResponse.json({ video });
+}
+
+async function failAndRefund(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  userId: string,
+  video: VideoRow,
+  errorMessage: string
+) {
+  const { data: updated } = await supabase
+    .from("videos")
+    .update({ status: "failed", error_message: errorMessage })
+    .eq("id", video.id)
+    .select()
+    .single();
+
+  const service = createServiceRoleClient();
+  await service.rpc("refund_credits", {
+    p_user_id: userId,
+    p_amount: video.credits_spent,
+    p_video_id: video.id,
+  });
+
+  return NextResponse.json({ video: updated ?? video });
 }
