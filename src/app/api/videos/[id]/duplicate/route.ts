@@ -7,6 +7,8 @@ import {
   buildCharacterTransformationPrompt,
   buildTransformationPrompt,
 } from "@/lib/ai/prompt-builder";
+import { buildWebhookUrl } from "@/lib/webhooks";
+import { failVideoAndRefund } from "@/lib/generation-finalize";
 import type { GenerationJobInput, TransformationSettings } from "@/types/ai-provider";
 import type { CharacterRow, VideoRow } from "@/types/database";
 
@@ -54,7 +56,10 @@ export async function POST(
     p_video_id: null,
   });
 
-  if (spendError) return NextResponse.json({ error: spendError.message }, { status: 500 });
+  if (spendError) {
+    console.error("spend_credits failed:", spendError);
+    return NextResponse.json({ error: spendError.message }, { status: 500 });
+  }
   if (!canSpend) return NextResponse.json({ error: "Crédits insuffisants." }, { status: 402 });
 
   let character: CharacterRow | null = null;
@@ -109,7 +114,7 @@ export async function POST(
       sourceVideoUrl: sourceUrlData?.signedUrl ?? source.source_video_url,
       settings,
       prompt,
-      webhookUrl: `${process.env.NEXT_PUBLIC_APP_URL}/api/webhooks/generation`,
+      webhookUrl: buildWebhookUrl("/api/webhooks/generation"),
       referenceImageUrl: character?.reference_image_url ?? undefined,
       referenceMode: character ? "become" : "preserve",
     };
@@ -125,18 +130,13 @@ export async function POST(
 
     if (updated) finalVideo = updated;
   } catch (err) {
-    const { data: updated } = await supabase
-      .from("videos")
-      .update({
-        status: "failed",
-        error_message: err instanceof Error ? err.message : "Erreur du fournisseur IA.",
-      })
-      .eq("id", video.id)
-      .select()
-      .single();
-
+    console.error("provider submitJob failed:", err);
+    const updated = await failVideoAndRefund(
+      service,
+      video,
+      err instanceof Error ? err.message : "Erreur du fournisseur IA."
+    );
     if (updated) finalVideo = updated;
-    await service.rpc("refund_credits", { p_user_id: user.id, p_amount: cost, p_video_id: video.id });
   }
 
   await supabase.from("history").insert({

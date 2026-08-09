@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getStripe } from "@/lib/stripe/client";
 import { PLAN_CONFIG, type BillablePlan } from "@/lib/stripe/plans";
+import { readJson } from "@/lib/http";
 
 export async function POST(request: Request) {
   const supabase = await createClient();
@@ -13,12 +14,13 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Non authentifié." }, { status: 401 });
   }
 
-  const { plan } = (await request.json()) as { plan: BillablePlan };
-  const config = PLAN_CONFIG[plan];
+  const body = await readJson<{ plan: BillablePlan }>(request);
+  const config = body?.plan ? PLAN_CONFIG[body.plan] : undefined;
 
   if (!config?.priceId) {
     return NextResponse.json({ error: "Plan invalide." }, { status: 400 });
   }
+  const plan = body!.plan;
 
   const { data: existingSub } = await supabase
     .from("subscriptions")

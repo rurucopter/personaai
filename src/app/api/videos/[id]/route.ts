@@ -63,8 +63,11 @@ export async function DELETE(
   if (video.source_video_url) {
     await supabase.storage.from("source-videos").remove([video.source_video_url]);
   }
+  // Result videos are re-hosted at `${videoId}.mp4` (see postprocessResultVideo);
+  // `result_video_url` is the full public URL, not the object path, so we derive
+  // the path here — passing the URL would never match and orphan the file.
   if (video.result_video_url) {
-    await supabase.storage.from("result-videos").remove([video.result_video_url]);
+    await supabase.storage.from("result-videos").remove([`${id}.mp4`]);
   }
 
   await supabase.from("history").insert({

@@ -19,7 +19,12 @@ export async function isUnderGenerationRateLimit(
     .eq("user_id", userId)
     .gte("created_at", oneHourAgo);
 
-  if (error) throw error;
+  // Fail open on a transient count error — a rate-limit check should never
+  // itself become a 500 that blocks a legitimate generation.
+  if (error) {
+    console.error("rate-limit count failed, allowing request:", error);
+    return true;
+  }
 
   return (count ?? 0) < MAX_GENERATIONS_PER_HOUR;
 }

@@ -15,6 +15,19 @@ export async function POST(
     return NextResponse.json({ error: "Non authentifié." }, { status: 401 });
   }
 
+  // Only allow favoriting a video the user actually owns — the favorites RLS
+  // only checks user_id, not that the referenced video belongs to them.
+  const { data: video } = await supabase
+    .from("videos")
+    .select("id")
+    .eq("id", id)
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  if (!video) {
+    return NextResponse.json({ error: "Vidéo introuvable." }, { status: 404 });
+  }
+
   const { data: existing } = await supabase
     .from("favorites")
     .select("video_id")

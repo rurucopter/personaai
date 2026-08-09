@@ -6,6 +6,24 @@ import { join } from "node:path";
 const YT_DLP_PATH = join(process.cwd(), "bin", "yt-dlp.exe");
 
 /**
+ * Only TikTok hosts are accepted — otherwise a user could hand us an
+ * arbitrary URL (internal address, non-TikTok host) and turn this into an
+ * SSRF/download-anything primitive via yt-dlp. yt-dlp's own follow-on fetches
+ * go to TikTok-owned CDNs, so gating the *input* host is the mitigation.
+ */
+export function isAllowedTikTokUrl(raw: string): boolean {
+  let url: URL;
+  try {
+    url = new URL(raw);
+  } catch {
+    return false;
+  }
+  if (url.protocol !== "https:" && url.protocol !== "http:") return false;
+  const host = url.hostname.toLowerCase();
+  return host === "tiktok.com" || host.endsWith(".tiktok.com");
+}
+
+/**
  * Downloads a TikTok (or any yt-dlp-supported) video by URL and returns it
  * as a buffer. For the user's own personal use — importing a video they
  * want to run through the transformation pipeline, same as uploading a

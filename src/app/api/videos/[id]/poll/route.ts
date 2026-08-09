@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient, createServiceRoleClient } from "@/lib/supabase/server";
 import { getVideoProvider } from "@/lib/ai/registry";
 import { postprocessResultVideo } from "@/lib/video-postprocess";
+import { failVideoAndRefund } from "@/lib/generation-finalize";
 import type { VideoRow } from "@/types/database";
 
 // Hard ceiling on how long a job may sit in queued/processing. Kling and
@@ -44,64 +45,49 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
     provider: video.provider,
   });
 
+  const service = createServiceRoleClient();
+
   if (result.status === "completed") {
-    const finalUrl = result.resultVideoUrl
-      ? await postprocessResultVideo(result.resultVideoUrl, video.id)
-      : result.resultVideoUrl;
+    // A "completed" job with no video is a failure — refund instead of
+    // leaving the user a completed row that can never play.
+    if (!result.resultVideoUrl) {
+      const updated = await failVideoAndRefund(service, video, "Aucune vidéo produite.");
+      return NextResponse.json({ video: updated ?? video });
+    }
+
+    const finalUrl = await postprocessResultVideo(result.resultVideoUrl, video.id);
 
     const { data: updated } = await supabase
       .from("videos")
       .update({ status: "completed", progress: 100, result_video_url: finalUrl })
       .eq("id", video.id)
+      .in("status", ["queued", "processing"])
       .select()
-      .single();
+      .maybeSingle();
 
     return NextResponse.json({ video: updated ?? video });
   }
 
   if (result.status === "failed" || result.status === "cancelled") {
-    return failAndRefund(
-      supabase,
-      user.id,
+    const updated = await failVideoAndRefund(
+      service,
       video,
       result.errorMessage ?? "La génération a échoué."
     );
+    return NextResponse.json({ video: updated ?? video });
   }
 
   // Still queued/processing: enforce the hard timeout so a silently-dead job
   // can't leave the user staring at an endless "Génération en cours".
   const minutesElapsed = (Date.now() - new Date(video.created_at).getTime()) / 60000;
   if (minutesElapsed > MAX_GENERATION_MINUTES) {
-    return failAndRefund(
-      supabase,
-      user.id,
+    const updated = await failVideoAndRefund(
+      service,
       video,
       "La génération a expiré. Vos crédits ont été remboursés, réessayez."
     );
+    return NextResponse.json({ video: updated ?? video });
   }
 
   return NextResponse.json({ video });
-}
-
-async function failAndRefund(
-  supabase: Awaited<ReturnType<typeof createClient>>,
-  userId: string,
-  video: VideoRow,
-  errorMessage: string
-) {
-  const { data: updated } = await supabase
-    .from("videos")
-    .update({ status: "failed", error_message: errorMessage })
-    .eq("id", video.id)
-    .select()
-    .single();
-
-  const service = createServiceRoleClient();
-  await service.rpc("refund_credits", {
-    p_user_id: userId,
-    p_amount: video.credits_spent,
-    p_video_id: video.id,
-  });
-
-  return NextResponse.json({ video: updated ?? video });
 }

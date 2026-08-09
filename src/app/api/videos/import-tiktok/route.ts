@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { downloadVideoFromUrl } from "@/lib/tiktok-import";
+import { downloadVideoFromUrl, isAllowedTikTokUrl } from "@/lib/tiktok-import";
 import {
   grabFrameServer,
   probeVideo,
@@ -13,6 +13,7 @@ import {
   MIN_SOURCE_SECONDS,
   MIN_SOURCE_WIDTH_PX,
 } from "@/lib/upload-constraints";
+import { readJson } from "@/lib/http";
 
 interface ImportTikTokBody {
   url: string;
@@ -26,14 +27,22 @@ export async function POST(request: Request) {
 
   if (!user) return NextResponse.json({ error: "Non authentifié." }, { status: 401 });
 
-  const body = (await request.json()) as ImportTikTokBody;
-  if (!body.url?.trim()) {
+  const body = await readJson<ImportTikTokBody>(request);
+  if (!body?.url?.trim()) {
     return NextResponse.json({ error: "Lien manquant." }, { status: 400 });
+  }
+
+  const url = body.url.trim();
+  if (!isAllowedTikTokUrl(url)) {
+    return NextResponse.json(
+      { error: "Lien invalide. Seuls les liens TikTok sont acceptés." },
+      { status: 400 }
+    );
   }
 
   let video: Buffer;
   try {
-    video = await downloadVideoFromUrl(body.url.trim());
+    video = await downloadVideoFromUrl(url);
   } catch (err) {
     console.error("TikTok import failed:", err);
     return NextResponse.json(

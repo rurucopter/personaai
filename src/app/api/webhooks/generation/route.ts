@@ -1,10 +1,29 @@
 import { NextResponse } from "next/server";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { postprocessResultVideo } from "@/lib/video-postprocess";
+import { isValidWebhookSecret } from "@/lib/webhooks";
+import { failVideoAndRefund } from "@/lib/generation-finalize";
+import { readJson } from "@/lib/http";
 import type { VideoRow } from "@/types/database";
 
 const FAILED_STATUSES = new Set(["ERROR", "FAILED", "failed", "canceled"]);
 const SUCCESS_STATUSES = new Set(["OK", "COMPLETED", "succeeded"]);
+
+interface ProviderOutput {
+  video?: { url?: string };
+  result_video_url?: string;
+  output?: unknown;
+  thumbnail?: { url?: string };
+  thumbnail_url?: string;
+}
+
+interface GenerationWebhookPayload extends ProviderOutput {
+  request_id?: string;
+  id?: string;
+  status?: string;
+  error?: string | { message?: string };
+  payload?: ProviderOutput;
+}
 
 /**
  * Generic webhook receiver for AI video providers. Each provider's payload
@@ -12,11 +31,22 @@ const SUCCESS_STATUSES = new Set(["OK", "COMPLETED", "succeeded"]);
  * - Fal (active default): { request_id, status: "OK"|"ERROR", payload: { video: { url } }, error }
  * - Replicate: the full prediction object — { id, status: "succeeded"|"failed", output: "<uri>" }
  * Providers are matched to a video row via provider_job_id, not payload shape.
+ *
+ * Authenticated by a shared secret in the URL — this endpoint writes with the
+ * service-role client (RLS bypassed), so an unauthenticated caller could
+ * otherwise forge failures (free refunds) or set arbitrary result URLs.
  */
 export async function POST(request: Request) {
-  const payload = await request.json();
+  if (!isValidWebhookSecret(request)) {
+    return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+  }
 
-  const requestId: string | undefined = payload.request_id ?? payload.id;
+  const payload = await readJson<GenerationWebhookPayload>(request);
+  if (!payload) {
+    return NextResponse.json({ error: "Invalid body." }, { status: 400 });
+  }
+
+  const requestId = payload.request_id ?? payload.id;
   if (!requestId) {
     return NextResponse.json({ error: "Missing job id." }, { status: 400 });
   }
@@ -36,22 +66,10 @@ export async function POST(request: Request) {
   const status: string = payload.status ?? "";
 
   if (FAILED_STATUSES.has(status)) {
-    await supabase
-      .from("videos")
-      .update({
-        status: "failed",
-        error_message:
-          (typeof payload.error === "string" ? payload.error : payload.error?.message) ??
-          "La génération a échoué.",
-      })
-      .eq("id", video.id);
-
-    await supabase.rpc("refund_credits", {
-      p_user_id: video.user_id,
-      p_amount: video.credits_spent,
-      p_video_id: video.id,
-    });
-
+    const message =
+      (typeof payload.error === "string" ? payload.error : payload.error?.message) ??
+      "La génération a échoué.";
+    await failVideoAndRefund(supabase, video, message);
     return NextResponse.json({ success: true });
   }
 
@@ -61,13 +79,20 @@ export async function POST(request: Request) {
   }
 
   // Fal wraps model output under `payload`; Replicate exposes it at the top level.
-  const output = payload.payload ?? payload;
+  const output: ProviderOutput = payload.payload ?? payload;
   const providerVideoUrl: string | undefined =
-    output.video?.url ?? output.result_video_url ?? (typeof output.output === "string" ? output.output : undefined);
+    output.video?.url ??
+    output.result_video_url ??
+    (typeof output.output === "string" ? output.output : undefined);
 
-  const resultVideoUrl = providerVideoUrl
-    ? await postprocessResultVideo(providerVideoUrl, video.id)
-    : providerVideoUrl;
+  // "Completed" with no video is a failure, not a success — otherwise the user
+  // is charged for a video that can never play, with no refund.
+  if (!providerVideoUrl) {
+    await failVideoAndRefund(supabase, video, "Aucune vidéo produite.");
+    return NextResponse.json({ success: true });
+  }
+
+  const resultVideoUrl = await postprocessResultVideo(providerVideoUrl, video.id);
 
   await supabase
     .from("videos")
@@ -77,7 +102,8 @@ export async function POST(request: Request) {
       result_video_url: resultVideoUrl,
       thumbnail_url: output.thumbnail?.url ?? output.thumbnail_url ?? null,
     })
-    .eq("id", video.id);
+    .eq("id", video.id)
+    .in("status", ["queued", "processing"]);
 
   return NextResponse.json({ success: true });
 }

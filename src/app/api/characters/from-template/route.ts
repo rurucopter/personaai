@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getAvatarTemplateById } from "@/lib/avatar-templates";
+import { readJson } from "@/lib/http";
 
 interface FromTemplateBody {
   templateId: string;
@@ -14,8 +15,8 @@ export async function POST(request: Request) {
 
   if (!user) return NextResponse.json({ error: "Non authentifié." }, { status: 401 });
 
-  const body = (await request.json()) as FromTemplateBody;
-  const template = getAvatarTemplateById(body.templateId);
+  const body = await readJson<FromTemplateBody>(request);
+  const template = body?.templateId ? getAvatarTemplateById(body.templateId) : undefined;
 
   if (!template) {
     return NextResponse.json({ error: "Avatar introuvable." }, { status: 400 });

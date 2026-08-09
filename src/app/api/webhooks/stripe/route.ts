@@ -47,6 +47,23 @@ export async function POST(request: Request) {
 
   const supabase = createServiceRoleClient();
 
+  // Claim this event before doing any work. Stripe retries deliveries, so
+  // without this a retried checkout/invoice event would grant credits twice
+  // (grantMonthlyCredits is a plain additive). A PK conflict = already handled.
+  const { error: claimError } = await supabase
+    .from("processed_stripe_events")
+    .insert({ event_id: event.id });
+
+  if (claimError) {
+    if (claimError.code === "23505") {
+      return NextResponse.json({ received: true, duplicate: true });
+    }
+    // Transient error claiming the event — let Stripe retry rather than risk
+    // processing without the idempotency guard in place.
+    console.error("stripe event claim failed:", claimError);
+    return NextResponse.json({ error: "Claim failed." }, { status: 500 });
+  }
+
   switch (event.type) {
     case "checkout.session.completed": {
       const session = event.data.object as Stripe.Checkout.Session;
@@ -56,7 +73,8 @@ export async function POST(request: Request) {
       const subscription = await stripe.subscriptions.retrieve(
         session.subscription as string
       );
-      const priceId = subscription.items.data[0]?.price.id;
+      const item = subscription.items.data[0];
+      const priceId = item?.price.id;
       const plan = priceId ? getPlanByPriceId(priceId) : undefined;
 
       await supabase.from("subscriptions").upsert(
@@ -66,9 +84,9 @@ export async function POST(request: Request) {
           status: subscription.status,
           stripe_customer_id: session.customer as string,
           stripe_subscription_id: subscription.id,
-          current_period_end: new Date(
-            subscription.items.data[0].current_period_end * 1000
-          ).toISOString(),
+          current_period_end: item?.current_period_end
+            ? new Date(item.current_period_end * 1000).toISOString()
+            : null,
           cancel_at_period_end: subscription.cancel_at_period_end,
         },
         { onConflict: "stripe_subscription_id" }
@@ -82,14 +100,15 @@ export async function POST(request: Request) {
 
     case "customer.subscription.updated": {
       const subscription = event.data.object as Stripe.Subscription;
+      const periodEnd = subscription.items.data[0]?.current_period_end;
       await supabase
         .from("subscriptions")
         .update({
           status: subscription.status,
           cancel_at_period_end: subscription.cancel_at_period_end,
-          current_period_end: new Date(
-            subscription.items.data[0].current_period_end * 1000
-          ).toISOString(),
+          current_period_end: periodEnd
+            ? new Date(periodEnd * 1000).toISOString()
+            : null,
           updated_at: new Date().toISOString(),
         })
         .eq("stripe_subscription_id", subscription.id);
@@ -117,13 +136,17 @@ export async function POST(request: Request) {
         .maybeSingle();
 
       if (sub) {
-        await supabase.from("payments").insert({
+        const { error: paymentError } = await supabase.from("payments").insert({
           user_id: sub.user_id,
           stripe_invoice_id: invoice.id,
           amount_cents: invoice.amount_paid,
           currency: invoice.currency,
           status: "paid",
         });
+        // A duplicate stripe_invoice_id (unique) is fine; log anything else.
+        if (paymentError && paymentError.code !== "23505") {
+          console.error("payments insert failed:", paymentError);
+        }
 
         // Renewal (not the first invoice, already handled by checkout.session.completed)
         if (invoice.billing_reason === "subscription_cycle") {

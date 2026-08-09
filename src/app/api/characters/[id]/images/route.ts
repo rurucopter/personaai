@@ -2,6 +2,9 @@ import { NextResponse } from "next/server";
 import { createClient, createServiceRoleClient } from "@/lib/supabase/server";
 import { submitCharacterImage } from "@/lib/ai/character-provider";
 import { CHARACTER_IMAGE_COST } from "@/lib/credit-costs";
+import { buildWebhookUrl } from "@/lib/webhooks";
+import { failCharacterImageAndRefund } from "@/lib/generation-finalize";
+import { readJson } from "@/lib/http";
 import type { CharacterRow } from "@/types/database";
 
 interface GenerateImageBody {
@@ -33,8 +36,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     );
   }
 
-  const body = (await request.json()) as GenerateImageBody;
-  if (!body.prompt?.trim()) {
+  const body = await readJson<GenerateImageBody>(request);
+  if (!body?.prompt?.trim()) {
     return NextResponse.json({ error: "Description de la scène requise." }, { status: 400 });
   }
 
@@ -46,7 +49,10 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     p_video_id: null,
   });
 
-  if (spendError) return NextResponse.json({ error: spendError.message }, { status: 500 });
+  if (spendError) {
+    console.error("spend_credits failed:", spendError);
+    return NextResponse.json({ error: spendError.message }, { status: 500 });
+  }
   if (!canSpend) return NextResponse.json({ error: "Crédits insuffisants." }, { status: 402 });
 
   const { data: image, error: insertError } = await supabase
@@ -64,6 +70,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     .single();
 
   if (insertError || !image) {
+    console.error("character_image insert failed:", insertError);
     await service.rpc("refund_credits", {
       p_user_id: user.id,
       p_amount: CHARACTER_IMAGE_COST,
@@ -79,7 +86,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     const requestId = await submitCharacterImage(
       character.reference_image_url,
       body.prompt.trim(),
-      `${process.env.NEXT_PUBLIC_APP_URL}/api/webhooks/character-generation`
+      buildWebhookUrl("/api/webhooks/character-generation")
     );
 
     await supabase
@@ -87,19 +94,12 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       .update({ provider_job_id: requestId, status: "processing" })
       .eq("id", image.id);
   } catch (err) {
-    await supabase
-      .from("character_images")
-      .update({
-        status: "failed",
-        error_message: err instanceof Error ? err.message : "Erreur du fournisseur IA.",
-      })
-      .eq("id", image.id);
-
-    await service.rpc("refund_credits", {
-      p_user_id: user.id,
-      p_amount: CHARACTER_IMAGE_COST,
-      p_video_id: null,
-    });
+    console.error("submitCharacterImage failed:", err);
+    await failCharacterImageAndRefund(
+      service,
+      image,
+      err instanceof Error ? err.message : "Erreur du fournisseur IA."
+    );
   }
 
   return NextResponse.json({ image });

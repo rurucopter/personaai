@@ -8,6 +8,9 @@ import {
   buildCharacterTransformationPrompt,
   buildTransformationPrompt,
 } from "@/lib/ai/prompt-builder";
+import { buildWebhookUrl } from "@/lib/webhooks";
+import { failVideoAndRefund } from "@/lib/generation-finalize";
+import { readJson } from "@/lib/http";
 import type { GenerationJobInput, TransformationSettings } from "@/types/ai-provider";
 import type { CharacterRow } from "@/types/database";
 
@@ -33,7 +36,10 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Non authentifié." }, { status: 401 });
   }
 
-  const body = (await request.json()) as CreateVideoBody;
+  const body = await readJson<CreateVideoBody>(request);
+  if (!body?.personaId || !body.sourceVideoPath) {
+    return NextResponse.json({ error: "Requête invalide." }, { status: 400 });
+  }
   const isCharacterMode = body.personaId.startsWith(CHARACTER_PREFIX);
 
   let character: CharacterRow | null = null;
@@ -74,6 +80,7 @@ export async function POST(request: Request) {
   });
 
   if (spendError) {
+    console.error("spend_credits failed:", spendError);
     return NextResponse.json({ error: spendError.message }, { status: 500 });
   }
   if (!canSpend) {
@@ -117,6 +124,7 @@ export async function POST(request: Request) {
     .single();
 
   if (insertError || !video) {
+    console.error("video insert failed:", insertError);
     await service.rpc("refund_credits", {
       p_user_id: user.id,
       p_amount: cost,
@@ -136,7 +144,7 @@ export async function POST(request: Request) {
       sourceVideoUrl: sourceUrlData?.signedUrl ?? body.sourceVideoPath,
       settings,
       prompt,
-      webhookUrl: `${process.env.NEXT_PUBLIC_APP_URL}/api/webhooks/generation`,
+      webhookUrl: buildWebhookUrl("/api/webhooks/generation"),
       referenceImageUrl,
       referenceMode: character ? "become" : "preserve",
       sourceWidth: body.sourceWidth,
@@ -154,23 +162,13 @@ export async function POST(request: Request) {
 
     if (updated) finalVideo = updated;
   } catch (err) {
-    const { data: updated } = await supabase
-      .from("videos")
-      .update({
-        status: "failed",
-        error_message: err instanceof Error ? err.message : "Erreur du fournisseur IA.",
-      })
-      .eq("id", video.id)
-      .select()
-      .single();
-
+    console.error("provider submitJob failed:", err);
+    const updated = await failVideoAndRefund(
+      service,
+      video,
+      err instanceof Error ? err.message : "Erreur du fournisseur IA."
+    );
     if (updated) finalVideo = updated;
-
-    await service.rpc("refund_credits", {
-      p_user_id: user.id,
-      p_amount: cost,
-      p_video_id: video.id,
-    });
   }
 
   await supabase.from("history").insert({
