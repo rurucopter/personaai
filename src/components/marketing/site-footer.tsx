@@ -13,7 +13,7 @@ const LEGAL_LINKS = [
 
 export function SiteFooter() {
   return (
-    <footer className="border-t border-white/10">
+    <footer className="border-t border-border">
       <div className="mx-auto flex max-w-6xl flex-col gap-10 px-6 py-16 sm:flex-row sm:justify-between">
         <div className="flex flex-col gap-2">
           <span className="text-sm font-semibold tracking-tight">
@@ -53,7 +53,7 @@ export function SiteFooter() {
         </div>
       </div>
 
-      <div className="border-t border-white/10 py-6 text-center text-xs text-muted-foreground">
+      <div className="border-t border-border py-6 text-center text-xs text-muted-foreground">
         © {new Date().getFullYear()} PersonaAI. Tous droits réservés.
       </div>
     </footer>

@@ -30,7 +30,7 @@ export function Features() {
           <Reveal
             key={title}
             delay={i * 0.1}
-            className="group flex flex-col gap-3 rounded-2xl border border-white/10 bg-white/[0.02] p-6 transition-colors hover:border-brand/40 hover:bg-white/[0.04]"
+            className="group flex flex-col gap-3 rounded-2xl border border-border bg-muted/30 p-6 transition-colors hover:border-brand/40 hover:bg-muted/60"
           >
             <div className="flex size-11 items-center justify-center rounded-xl bg-gradient-to-br from-brand to-brand-2 text-white shadow-[0_8px_24px_-8px_var(--brand)] transition-transform group-hover:scale-110">
               <Icon className="size-5" />

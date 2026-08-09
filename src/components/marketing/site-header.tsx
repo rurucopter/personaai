@@ -14,7 +14,7 @@ const NAV_LINKS = [
 
 export function SiteHeader() {
   return (
-    <header className="sticky top-0 z-40 border-b border-white/10 bg-background/80 backdrop-blur">
+    <header className="sticky top-0 z-40 border-b border-border bg-background/80 backdrop-blur">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
         <Link href="/" className="text-sm font-semibold tracking-tight">
           Persona<span className="text-brand">AI</span>
@@ -52,7 +52,7 @@ export function SiteHeader() {
 
           <DialogPrimitive.Portal>
             <DialogPrimitive.Backdrop className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm duration-150 data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0" />
-            <DialogPrimitive.Popup className="fixed inset-y-0 right-0 z-50 flex w-72 max-w-[85vw] flex-col gap-6 border-l border-white/10 bg-card p-6 duration-200 data-open:animate-in data-open:slide-in-from-right data-closed:animate-out data-closed:slide-out-to-right">
+            <DialogPrimitive.Popup className="fixed inset-y-0 right-0 z-50 flex w-72 max-w-[85vw] flex-col gap-6 border-l border-border bg-card p-6 duration-200 data-open:animate-in data-open:slide-in-from-right data-closed:animate-out data-closed:slide-out-to-right">
               <div className="flex items-center justify-between">
                 <span className="text-sm font-semibold tracking-tight">
                   Persona<span className="text-brand">AI</span>
@@ -70,7 +70,7 @@ export function SiteHeader() {
                   <DialogPrimitive.Close
                     key={link.href}
                     render={<a href={link.href} />}
-                    className="rounded-lg px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-white/5 hover:text-foreground"
+                    className="rounded-lg px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                   >
                     {link.label}
                   </DialogPrimitive.Close>

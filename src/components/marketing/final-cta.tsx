@@ -5,7 +5,7 @@ import { Reveal } from "@/components/marketing/reveal";
 
 export function FinalCTA() {
   return (
-    <section className="relative overflow-hidden border-t border-white/10">
+    <section className="relative overflow-hidden border-t border-border">
       <div
         aria-hidden
         className="pointer-events-none absolute inset-x-0 bottom-0 -z-10 h-[500px] bg-[radial-gradient(ellipse_60%_60%_at_50%_100%,color-mix(in_oklch,var(--brand),transparent_80%),transparent)]"

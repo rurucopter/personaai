@@ -28,9 +28,9 @@ export function BeforeAfter() {
           <Reveal
             key={example.persona}
             delay={i * 0.1}
-            className="group flex items-center gap-2 overflow-hidden rounded-2xl border border-white/10"
+            className="group flex items-center gap-2 overflow-hidden rounded-2xl border border-border"
           >
-            <div className="flex aspect-[3/4] flex-1 flex-col items-center justify-center gap-2 bg-white/[0.03] text-sm text-muted-foreground">
+            <div className="flex aspect-[3/4] flex-1 flex-col items-center justify-center gap-2 bg-muted/40 text-sm text-muted-foreground">
               <User className="size-6" />
               Vous
             </div>

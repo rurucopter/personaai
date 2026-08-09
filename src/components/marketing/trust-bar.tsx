@@ -11,7 +11,7 @@ const ITEMS = [
 
 export function TrustBar() {
   return (
-    <div className="border-y border-white/10 bg-white/[0.02]">
+    <div className="border-y border-border bg-muted/30">
       <div className="mx-auto flex max-w-6xl flex-col items-center justify-center gap-4 px-6 py-5 text-sm text-muted-foreground sm:flex-row sm:gap-10">
         {ITEMS.map((item, i) => (
           <motion.div

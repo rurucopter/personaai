@@ -49,7 +49,7 @@ const USE_CASES = [
 
 export function UseCases() {
   return (
-    <section id="cas-usage" className="border-t border-white/10 bg-white/[0.015]">
+    <section id="cas-usage" className="border-t border-border bg-muted/20">
       <div className="mx-auto max-w-6xl px-6 py-24">
         <Reveal className="mb-14 flex flex-col items-center gap-3 text-center">
           <span className="text-xs font-medium tracking-widest text-brand uppercase">
@@ -68,7 +68,7 @@ export function UseCases() {
             <Reveal
               key={useCase.title}
               delay={i * 0.06}
-              className="group relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.02] p-6 transition-colors hover:bg-white/[0.04]"
+              className="group relative overflow-hidden rounded-2xl border border-border bg-muted/30 p-6 transition-colors hover:bg-muted/60"
             >
               <div
                 aria-hidden

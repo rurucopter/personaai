@@ -71,7 +71,7 @@ export function Pricing() {
               "relative flex flex-col gap-6 rounded-2xl border p-6",
               plan.highlighted
                 ? "border-brand/50 bg-gradient-to-b from-brand/10 to-transparent shadow-[0_0_40px_-12px_var(--brand)]"
-                : "border-white/10 bg-white/[0.02]"
+                : "border-border bg-muted/30"
             )}
           >
             {plan.highlighted && (

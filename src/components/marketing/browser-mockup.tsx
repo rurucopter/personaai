@@ -24,8 +24,8 @@ export function BrowserMockup() {
         className="absolute -inset-8 -z-10 rounded-[2.5rem] bg-[radial-gradient(ellipse_60%_60%_at_50%_40%,color-mix(in_oklch,var(--brand),transparent_55%),transparent)] blur-2xl"
       />
 
-      <div className="overflow-hidden rounded-2xl border border-white/10 bg-card shadow-[0_40px_120px_-20px_color-mix(in_oklch,var(--brand),transparent_40%)]">
-        <div className="flex items-center gap-1.5 border-b border-white/10 bg-black/20 px-4 py-3">
+      <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-[0_40px_120px_-20px_color-mix(in_oklch,var(--brand),transparent_40%)]">
+        <div className="flex items-center gap-1.5 border-b border-border bg-black/20 px-4 py-3">
           <span className="size-2.5 rounded-full bg-white/20" />
           <span className="size-2.5 rounded-full bg-white/20" />
           <span className="size-2.5 rounded-full bg-white/20" />
@@ -36,11 +36,11 @@ export function BrowserMockup() {
 
         <div className="grid gap-4 p-6 sm:grid-cols-[1fr_1.4fr] sm:p-8">
           <div className="flex flex-col gap-3">
-            <div className="flex items-center gap-2 rounded-xl border border-dashed border-white/15 bg-white/[0.03] p-4 text-xs text-muted-foreground">
+            <div className="flex items-center gap-2 rounded-xl border border-dashed border-border bg-muted/40 p-4 text-xs text-muted-foreground">
               <Upload className="size-4 shrink-0 text-brand" />
               Votre vidéo importée
             </div>
-            <div className="flex flex-1 flex-col justify-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] p-4">
+            <div className="flex flex-1 flex-col justify-center gap-2 rounded-xl border border-border bg-muted/40 p-4">
               <span className="text-xs text-muted-foreground">Persona</span>
               <span className="text-sm font-medium">Cyberpunk</span>
               <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-white/10">
@@ -78,7 +78,7 @@ export function BrowserMockup() {
           </div>
         </div>
 
-        <div className="flex items-center justify-between border-t border-white/10 bg-black/20 px-6 py-4 sm:px-8">
+        <div className="flex items-center justify-between border-t border-border bg-black/20 px-6 py-4 sm:px-8">
           <span className="text-xs text-muted-foreground">
             3 crédits offerts à l&apos;inscription
           </span>

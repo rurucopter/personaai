@@ -31,7 +31,10 @@ export function DashboardTopbar({
     <header className="flex h-16 items-center justify-between border-b border-border px-6">
       <div />
       <div className="flex items-center gap-3">
-        <Badge variant="secondary" className="font-medium">
+        <Badge
+          variant="secondary"
+          className="border-primary/25 bg-primary/10 font-medium text-primary"
+        >
           {creditBalance} crédits
         </Badge>
         <ThemeToggle />

@@ -35,7 +35,7 @@ const FAQS = [
 
 export function FAQ() {
   return (
-    <section id="faq" className="border-t border-white/10 bg-white/[0.015]">
+    <section id="faq" className="border-t border-border bg-muted/20">
       <div className="mx-auto max-w-3xl px-6 py-24">
         <Reveal className="mb-14 flex flex-col items-center gap-3 text-center">
           <span className="text-xs font-medium tracking-widest text-brand uppercase">
