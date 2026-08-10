@@ -5,9 +5,9 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
     <div className="flex min-h-screen flex-1 flex-col items-center justify-center bg-background px-4 py-16">
       <Link
         href="/"
-        className="mb-8 text-sm font-semibold tracking-tight text-foreground"
+        className="mb-8 text-lg font-semibold tracking-tight text-foreground"
       >
-        PersonaAI
+        Persona<span className="text-brand">AI</span>
       </Link>
       <div className="w-full max-w-sm">{children}</div>
     </div>

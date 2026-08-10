@@ -1,7 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import {
@@ -20,6 +21,19 @@ export default function ResetPasswordPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  // The recovery link routes through /auth/callback, which exchanges the code
+  // for a session before landing here. No session = direct/expired/invalid
+  // link, so we show a clear message instead of a form that can only fail.
+  const [sessionState, setSessionState] = useState<"checking" | "valid" | "invalid">(
+    "checking"
+  );
+
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getSession().then(({ data }) => {
+      setSessionState(data.session ? "valid" : "invalid");
+    });
+  }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -39,6 +53,35 @@ export default function ResetPasswordPage() {
     } finally {
       setLoading(false);
     }
+  }
+
+  if (sessionState === "checking") {
+    return (
+      <Card>
+        <CardContent className="flex items-center justify-center py-10">
+          <Loader2 className="size-5 animate-spin text-muted-foreground" />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (sessionState === "invalid") {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-xl">Lien invalide ou expiré</CardTitle>
+          <CardDescription>
+            Ce lien de réinitialisation n&apos;est plus valide. Demandez-en un
+            nouveau pour continuer.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Button className="w-full" render={<Link href="/forgot-password" />} nativeButton={false}>
+            Demander un nouveau lien
+          </Button>
+        </CardContent>
+      </Card>
+    );
   }
 
   return (

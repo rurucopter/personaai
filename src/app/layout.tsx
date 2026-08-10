@@ -26,9 +26,16 @@ export const metadata: Metadata = {
     type: "website",
     locale: "fr_FR",
     siteName: "PersonaAI",
+    title: "PersonaAI — Transformez-vous en n'importe quel personnage",
+    description:
+      "Importez une vidéo de vous-même et transformez votre style et votre univers grâce à l'IA, tout en conservant votre identité.",
+    url: "/",
   },
   twitter: {
     card: "summary_large_image",
+    title: "PersonaAI — Transformez-vous en n'importe quel personnage",
+    description:
+      "Importez une vidéo de vous-même et transformez votre style et votre univers grâce à l'IA.",
   },
 };
 
