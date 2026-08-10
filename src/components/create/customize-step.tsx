@@ -1,5 +1,6 @@
 "use client";
 
+import { useId } from "react";
 import {
   BACKGROUNDS,
   CAMERA_ANGLES,
@@ -38,11 +39,12 @@ function OptionSelect({
   options: readonly string[];
   onChange: (value: string) => void;
 }) {
+  const id = useId();
   return (
     <div className="flex flex-col gap-2">
-      <Label>{label}</Label>
+      <Label htmlFor={id}>{label}</Label>
       <Select value={value} onValueChange={(v) => v && onChange(v)}>
-        <SelectTrigger className="w-full">
+        <SelectTrigger id={id} className="w-full">
           <SelectValue placeholder="Choisir..." />
         </SelectTrigger>
         <SelectContent>
@@ -58,6 +60,8 @@ function OptionSelect({
 }
 
 export function CustomizeStep({ settings, onChange }: CustomizeStepProps) {
+  const qualityId = useId();
+
   function set<K extends keyof Omit<TransformationSettings, "persona">>(
     key: K,
     value: Omit<TransformationSettings, "persona">[K]
@@ -122,6 +126,7 @@ export function CustomizeStep({ settings, onChange }: CustomizeStepProps) {
         <div className="flex flex-col gap-3">
           <Label>Énergie ({settings.energyLevel ?? 50}%)</Label>
           <Slider
+            aria-label="Niveau d'énergie"
             value={[settings.energyLevel ?? 50]}
             onValueChange={(v) => set("energyLevel", Array.isArray(v) ? v[0] : v)}
           />
@@ -129,31 +134,30 @@ export function CustomizeStep({ settings, onChange }: CustomizeStepProps) {
         <div className="flex flex-col gap-3">
           <Label>Niveau de sourire ({settings.smileLevel ?? 50}%)</Label>
           <Slider
+            aria-label="Niveau de sourire"
             value={[settings.smileLevel ?? 50]}
             onValueChange={(v) => set("smileLevel", Array.isArray(v) ? v[0] : v)}
           />
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <div className="flex flex-col gap-2">
-          <Label>Qualité</Label>
-          <Select
-            value={settings.quality}
-            onValueChange={(v) => v && set("quality", v as TransformationSettings["quality"])}
-          >
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Choisir..." />
-            </SelectTrigger>
-            <SelectContent>
-              {QUALITY_LEVELS.map((q) => (
-                <SelectItem key={q.value} value={q.value}>
-                  {q.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+      <div className="flex max-w-xs flex-col gap-2">
+        <Label htmlFor={qualityId}>Qualité</Label>
+        <Select
+          value={settings.quality}
+          onValueChange={(v) => v && set("quality", v as TransformationSettings["quality"])}
+        >
+          <SelectTrigger id={qualityId} className="w-full">
+            <SelectValue placeholder="Choisir..." />
+          </SelectTrigger>
+          <SelectContent>
+            {QUALITY_LEVELS.map((q) => (
+              <SelectItem key={q.value} value={q.value}>
+                {q.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
     </div>
   );

@@ -37,10 +37,20 @@ export default async function AdminUsersPage() {
             </tr>
           </thead>
           <tbody>
+            {(users ?? []).length === 0 && (
+              <tr>
+                <td colSpan={4} className="p-6 text-center text-muted-foreground">
+                  Aucun utilisateur pour le moment.
+                </td>
+              </tr>
+            )}
             {(users ?? []).map((user) => {
               const sub = subByUser.get(user.id);
               return (
-                <tr key={user.id} className="border-b border-border last:border-0">
+                <tr
+                  key={user.id}
+                  className="border-b border-border transition-colors last:border-0 hover:bg-muted/40"
+                >
                   <td className="p-3">
                     <div className="flex flex-col">
                       <span className="font-medium">{user.full_name ?? "—"}</span>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import type { BillablePlan } from "@/lib/stripe/plans";
@@ -36,7 +37,8 @@ export function CheckoutButton({
   }
 
   return (
-    <Button variant={variant} disabled={loading} onClick={handleClick}>
+    <Button variant={variant} disabled={loading} onClick={handleClick} className="gap-2">
+      {loading && <Loader2 className="size-4 animate-spin" />}
       {label}
     </Button>
   );
@@ -61,7 +63,8 @@ export function ManageBillingButton() {
   }
 
   return (
-    <Button variant="outline" disabled={loading} onClick={handleClick}>
+    <Button variant="outline" disabled={loading} onClick={handleClick} className="gap-2">
+      {loading && <Loader2 className="size-4 animate-spin" />}
       Gérer mon abonnement
     </Button>
   );

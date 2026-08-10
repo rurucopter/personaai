@@ -1,8 +1,10 @@
 import { createClient } from "@/lib/supabase/server";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CheckoutButton, ManageBillingButton } from "@/components/billing/billing-actions";
 import { PLAN_CONFIG, type BillablePlan } from "@/lib/stripe/plans";
+import { cn } from "@/lib/utils";
 import type { PaymentRow, SubscriptionRow } from "@/types/database";
 
 const STATUS_LABEL: Record<SubscriptionRow["status"], string> = {
@@ -11,6 +13,13 @@ const STATUS_LABEL: Record<SubscriptionRow["status"], string> = {
   past_due: "Paiement en retard",
   canceled: "Annulé",
   incomplete: "Incomplet",
+};
+
+const PAYMENT_STATUS_LABEL: Record<string, string> = {
+  paid: "Payé",
+  pending: "En attente",
+  failed: "Échoué",
+  refunded: "Remboursé",
 };
 
 export default async function BillingPage() {
@@ -72,19 +81,30 @@ export default async function BillingPage() {
           <CardTitle className="text-base">Changer de plan</CardTitle>
         </CardHeader>
         <CardContent className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-          {(Object.keys(PLAN_CONFIG) as BillablePlan[]).map((plan) => (
-            <div key={plan} className="flex flex-col gap-3 rounded-xl border border-border p-4">
-              <p className="font-medium">{PLAN_CONFIG[plan].label}</p>
-              <p className="text-sm text-muted-foreground">
-                {PLAN_CONFIG[plan].monthlyCredits} crédits / mois
-              </p>
-              <CheckoutButton
-                plan={plan}
-                label={subscription?.plan === plan ? "Plan actuel" : "Choisir"}
-                variant={subscription?.plan === plan ? "outline" : "default"}
-              />
-            </div>
-          ))}
+          {(Object.keys(PLAN_CONFIG) as BillablePlan[]).map((plan) => {
+            const isCurrent = subscription?.plan === plan && subscription.status === "active";
+            return (
+              <div
+                key={plan}
+                className={cn(
+                  "flex flex-col gap-3 rounded-xl border p-4",
+                  isCurrent ? "border-brand/50 bg-brand/5" : "border-border"
+                )}
+              >
+                <p className="font-medium">{PLAN_CONFIG[plan].label}</p>
+                <p className="text-sm text-muted-foreground">
+                  {PLAN_CONFIG[plan].monthlyCredits} crédits / mois
+                </p>
+                {isCurrent ? (
+                  <Button variant="outline" disabled>
+                    Plan actuel
+                  </Button>
+                ) : (
+                  <CheckoutButton plan={plan} label="Choisir" />
+                )}
+              </div>
+            );
+          })}
         </CardContent>
       </Card>
 
@@ -103,7 +123,9 @@ export default async function BillingPage() {
                   <span className="text-sm font-medium">
                     {(payment.amount_cents / 100).toFixed(2)} {payment.currency.toUpperCase()}
                   </span>
-                  <Badge variant="secondary">{payment.status}</Badge>
+                  <Badge variant="secondary">
+                    {PAYMENT_STATUS_LABEL[payment.status] ?? payment.status}
+                  </Badge>
                 </div>
               ))}
             </div>

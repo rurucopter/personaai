@@ -34,10 +34,20 @@ export default async function AdminSubscriptionsPage() {
             </tr>
           </thead>
           <tbody>
+            {(subscriptions ?? []).length === 0 && (
+              <tr>
+                <td colSpan={4} className="p-6 text-center text-muted-foreground">
+                  Aucun abonnement pour le moment.
+                </td>
+              </tr>
+            )}
             {(subscriptions ?? []).map((sub) => {
               const user = userById.get(sub.user_id);
               return (
-                <tr key={sub.id} className="border-b border-border last:border-0">
+                <tr
+                  key={sub.id}
+                  className="border-b border-border transition-colors last:border-0 hover:bg-muted/40"
+                >
                   <td className="p-3">{user?.email ?? sub.user_id}</td>
                   <td className="p-3">
                     <Badge variant="secondary">{sub.plan}</Badge>
