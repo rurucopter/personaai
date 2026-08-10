@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { createClient, createServiceRoleClient } from "@/lib/supabase/server";
 import { getCharacterImageJobStatus } from "@/lib/ai/character-provider";
+import { failCharacterImageAndRefund } from "@/lib/generation-finalize";
+import { rehostCharacterImage } from "@/lib/character-media";
 import type { CharacterImageRow } from "@/types/database";
 
 /**
@@ -32,33 +34,42 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
   }
 
   const result = await getCharacterImageJobStatus(image.provider_job_id);
+  const service = createServiceRoleClient();
 
   if (result.status === "completed") {
+    // Completed with no image is a failure — refund instead of a dead row.
+    if (!result.imageUrl) {
+      const updated = await failCharacterImageAndRefund(service, image, "Aucune image produite.");
+      return NextResponse.json({ image: updated ?? image });
+    }
+
+    // Re-host so the image survives the provider CDN URL expiring.
+    const durableUrl = await rehostCharacterImage(result.imageUrl, image.user_id, image.id);
+
     const { data: updated } = await supabase
       .from("character_images")
-      .update({ status: "completed", image_url: result.imageUrl })
+      .update({ status: "completed", image_url: durableUrl })
       .eq("id", image.id)
+      .in("status", ["queued", "processing"])
       .select()
-      .single();
+      .maybeSingle();
+
+    if (image.is_reference) {
+      await supabase
+        .from("ai_characters")
+        .update({ reference_image_url: durableUrl, updated_at: new Date().toISOString() })
+        .eq("id", image.character_id);
+    }
 
     return NextResponse.json({ image: updated ?? image });
   }
 
   if (result.status === "failed") {
-    const { data: updated } = await supabase
-      .from("character_images")
-      .update({ status: "failed", error_message: result.errorMessage ?? "La génération a échoué." })
-      .eq("id", image.id)
-      .select()
-      .single();
-
-    const service = createServiceRoleClient();
-    await service.rpc("refund_credits", {
-      p_user_id: user.id,
-      p_amount: image.credits_spent,
-      p_video_id: null,
-    });
-
+    const updated = await failCharacterImageAndRefund(
+      service,
+      image,
+      result.errorMessage ?? "La génération a échoué."
+    );
     return NextResponse.json({ image: updated ?? image });
   }
 

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { isValidWebhookSecret } from "@/lib/webhooks";
 import { failCharacterImageAndRefund } from "@/lib/generation-finalize";
+import { rehostCharacterImage } from "@/lib/character-media";
 import { readJson } from "@/lib/http";
 import type { CharacterImageRow } from "@/types/database";
 
@@ -72,16 +73,20 @@ export async function POST(request: Request) {
     return NextResponse.json({ success: true });
   }
 
+  // Re-host onto our own bucket so the image survives the provider CDN URL
+  // expiring (falls back to the provider URL if re-hosting fails).
+  const durableUrl = await rehostCharacterImage(imageUrl, image.user_id, image.id);
+
   await supabase
     .from("character_images")
-    .update({ status: "completed", image_url: imageUrl })
+    .update({ status: "completed", image_url: durableUrl })
     .eq("id", image.id)
     .in("status", ["queued", "processing"]);
 
   if (image.is_reference) {
     await supabase
       .from("ai_characters")
-      .update({ reference_image_url: imageUrl, updated_at: new Date().toISOString() })
+      .update({ reference_image_url: durableUrl, updated_at: new Date().toISOString() })
       .eq("id", image.character_id);
   }
 
