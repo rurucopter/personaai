@@ -9,10 +9,17 @@ import {
 } from "@/lib/ai/prompt-builder";
 import { buildWebhookUrl } from "@/lib/webhooks";
 import { failVideoAndRefund } from "@/lib/generation-finalize";
+import { getAvatarTemplateById } from "@/lib/avatar-templates";
 import type { GenerationJobInput, TransformationSettings } from "@/types/ai-provider";
 import type { CharacterRow, VideoRow } from "@/types/database";
 
 const CHARACTER_PREFIX = "character:";
+const TEMPLATE_PREFIX = "template:";
+
+interface BecomeTarget {
+  imageUrl: string;
+  description: string;
+}
 
 export async function POST(
   _request: Request,
@@ -62,7 +69,7 @@ export async function POST(
   }
   if (!canSpend) return NextResponse.json({ error: "Crédits insuffisants." }, { status: 402 });
 
-  let character: CharacterRow | null = null;
+  let becomeTarget: BecomeTarget | null = null;
   if (settings.persona.startsWith(CHARACTER_PREFIX)) {
     const characterId = settings.persona.slice(CHARACTER_PREFIX.length);
     const { data } = await supabase
@@ -71,7 +78,12 @@ export async function POST(
       .eq("id", characterId)
       .eq("user_id", user.id)
       .single<CharacterRow>();
-    character = data;
+    if (data?.reference_image_url) {
+      becomeTarget = { imageUrl: data.reference_image_url, description: data.description };
+    }
+  } else if (settings.persona.startsWith(TEMPLATE_PREFIX)) {
+    const template = getAvatarTemplateById(settings.persona.slice(TEMPLATE_PREFIX.length));
+    if (template) becomeTarget = { imageUrl: template.imageUrl, description: template.description };
   }
 
   const { data: video, error: insertError } = await supabase
@@ -102,8 +114,8 @@ export async function POST(
     .from("source-videos")
     .createSignedUrl(source.source_video_url, 60 * 60);
 
-  const prompt = character
-    ? buildCharacterTransformationPrompt(character.description, settings)
+  const prompt = becomeTarget
+    ? buildCharacterTransformationPrompt(becomeTarget.description, settings)
     : buildTransformationPrompt(settings);
 
   let finalVideo = video;
@@ -115,8 +127,8 @@ export async function POST(
       settings,
       prompt,
       webhookUrl: buildWebhookUrl("/api/webhooks/generation"),
-      referenceImageUrl: character?.reference_image_url ?? undefined,
-      referenceMode: character ? "become" : "preserve",
+      referenceImageUrl: becomeTarget?.imageUrl,
+      referenceMode: becomeTarget ? "become" : "preserve",
     };
 
     const handle = await provider.submitJob(jobInput);

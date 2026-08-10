@@ -11,10 +11,21 @@ import {
 import { buildWebhookUrl } from "@/lib/webhooks";
 import { failVideoAndRefund } from "@/lib/generation-finalize";
 import { readJson } from "@/lib/http";
+import { getAvatarTemplateById } from "@/lib/avatar-templates";
 import type { GenerationJobInput, TransformationSettings } from "@/types/ai-provider";
 import type { CharacterRow } from "@/types/database";
 
 const CHARACTER_PREFIX = "character:";
+const TEMPLATE_PREFIX = "template:";
+
+// Both AI characters and ready-made avatar templates drive "become" mode:
+// the video's person is replaced by this target face. Unifying them here lets
+// a user apply any of the 21 avatars directly in the create flow, without
+// first turning each into a saved character.
+interface BecomeTarget {
+  imageUrl: string;
+  description: string;
+}
 
 interface CreateVideoBody {
   sourceVideoPath: string;
@@ -40,11 +51,9 @@ export async function POST(request: Request) {
   if (!body?.personaId || !body.sourceVideoPath) {
     return NextResponse.json({ error: "Requête invalide." }, { status: 400 });
   }
-  const isCharacterMode = body.personaId.startsWith(CHARACTER_PREFIX);
+  let becomeTarget: BecomeTarget | null = null;
 
-  let character: CharacterRow | null = null;
-
-  if (isCharacterMode) {
+  if (body.personaId.startsWith(CHARACTER_PREFIX)) {
     const characterId = body.personaId.slice(CHARACTER_PREFIX.length);
     const { data } = await supabase
       .from("ai_characters")
@@ -56,7 +65,13 @@ export async function POST(request: Request) {
     if (!data || !data.reference_image_url) {
       return NextResponse.json({ error: "Personnage introuvable." }, { status: 400 });
     }
-    character = data;
+    becomeTarget = { imageUrl: data.reference_image_url, description: data.description };
+  } else if (body.personaId.startsWith(TEMPLATE_PREFIX)) {
+    const template = getAvatarTemplateById(body.personaId.slice(TEMPLATE_PREFIX.length));
+    if (!template) {
+      return NextResponse.json({ error: "Avatar introuvable." }, { status: 400 });
+    }
+    becomeTarget = { imageUrl: template.imageUrl, description: template.description };
   } else if (!getPersonaById(body.personaId)) {
     return NextResponse.json({ error: "Persona inconnu." }, { status: 400 });
   }
@@ -91,11 +106,11 @@ export async function POST(request: Request) {
     .from("source-videos")
     .createSignedUrl(body.sourceVideoPath, 60 * 60);
 
-  // Character mode replaces the person, so it targets the character's own
+  // Become mode replaces the person, so it targets the avatar/character's own
   // face rather than preserving the user's — the user's captured frame
   // (if any) isn't relevant here.
-  const referenceImageUrl = character
-    ? character.reference_image_url!
+  const referenceImageUrl = becomeTarget
+    ? becomeTarget.imageUrl
     : body.referenceFramePath
       ? (
           await supabase.storage
@@ -104,8 +119,8 @@ export async function POST(request: Request) {
         ).data?.signedUrl
       : undefined;
 
-  const prompt = character
-    ? buildCharacterTransformationPrompt(character.description, body.settings)
+  const prompt = becomeTarget
+    ? buildCharacterTransformationPrompt(becomeTarget.description, body.settings)
     : buildTransformationPrompt(settings);
 
   const { data: video, error: insertError } = await supabase
@@ -146,7 +161,7 @@ export async function POST(request: Request) {
       prompt,
       webhookUrl: buildWebhookUrl("/api/webhooks/generation"),
       referenceImageUrl,
-      referenceMode: character ? "become" : "preserve",
+      referenceMode: becomeTarget ? "become" : "preserve",
       sourceWidth: body.sourceWidth,
       sourceHeight: body.sourceHeight,
     };

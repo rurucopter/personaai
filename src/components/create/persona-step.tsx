@@ -1,6 +1,7 @@
 "use client";
 
 import { PERSONA_CATEGORIES, getPersonasByCategory } from "@/lib/personas";
+import { AVATAR_TEMPLATES } from "@/lib/avatar-templates";
 import { cn } from "@/lib/utils";
 import type { CharacterRow } from "@/types/database";
 
@@ -48,6 +49,42 @@ export function PersonaStep({ selected, onSelect, characters }: PersonaStepProps
           </div>
         </div>
       )}
+
+      <div className="flex flex-col gap-3">
+        <h3 className="text-sm font-medium text-muted-foreground">
+          Avatars IA — devenez cette personne
+        </h3>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+          {AVATAR_TEMPLATES.map((template) => {
+            const id = `template:${template.id}`;
+            return (
+              <button
+                key={template.id}
+                type="button"
+                onClick={() => onSelect(id)}
+                className={cn(
+                  "flex flex-col overflow-hidden rounded-xl border text-left transition-colors",
+                  selected === id
+                    ? "border-primary bg-secondary/60"
+                    : "border-border hover:bg-secondary/30"
+                )}
+              >
+                <div className="aspect-square overflow-hidden bg-secondary/30">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={template.imageUrl}
+                    alt={template.name}
+                    className="size-full object-cover"
+                  />
+                </div>
+                <div className="p-3">
+                  <span className="font-medium">{template.name}</span>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </div>
 
       {PERSONA_CATEGORIES.map((category) => (
         <div key={category} className="flex flex-col gap-3">

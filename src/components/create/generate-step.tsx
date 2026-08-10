@@ -4,6 +4,7 @@ import { Loader2, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { getPersonaById } from "@/lib/personas";
+import { getAvatarTemplateById } from "@/lib/avatar-templates";
 import type { TransformationSettings } from "@/types/ai-provider";
 import type { CharacterRow } from "@/types/database";
 
@@ -31,8 +32,11 @@ export function GenerateStep({
   const character = personaId.startsWith("character:")
     ? characters.find((c) => `character:${c.id}` === personaId)
     : undefined;
-  const persona = character ? undefined : getPersonaById(personaId);
-  const label = character?.name ?? persona?.label;
+  const template = personaId.startsWith("template:")
+    ? getAvatarTemplateById(personaId.slice("template:".length))
+    : undefined;
+  const persona = character || template ? undefined : getPersonaById(personaId);
+  const label = character?.name ?? template?.name ?? persona?.label;
   const insufficientCredits = creditBalance < cost;
 
   return (
