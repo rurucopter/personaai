@@ -81,8 +81,21 @@ export function CreationWizard({ creditBalance, characters }: CreationWizardProp
     }
   }
 
+  function resetWizard() {
+    setVideo(null);
+    setStep(1);
+    setSourceVideoPath(null);
+    setPreviewUrl(null);
+    setDurationSeconds(null);
+    setReferenceFramePath(null);
+    setSourceDimensions(null);
+    setPersonaId(null);
+    setSettings(DEFAULT_SETTINGS);
+    setError(null);
+  }
+
   if (video) {
-    return <GenerationProgress initialVideo={video} />;
+    return <GenerationProgress initialVideo={video} onRestart={resetWizard} />;
   }
 
   return (

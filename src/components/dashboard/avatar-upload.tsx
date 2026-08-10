@@ -68,7 +68,7 @@ export function AvatarUpload({ avatarUrl, fallback }: AvatarUploadProps) {
   return (
     <div className="flex items-center gap-4">
       <Avatar className="size-16">
-        <AvatarImage src={preview ?? undefined} />
+        <AvatarImage src={preview ?? undefined} alt="Photo de profil" />
         <AvatarFallback>{fallback}</AvatarFallback>
       </Avatar>
       <Button

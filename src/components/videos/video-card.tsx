@@ -5,15 +5,24 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
   Copy,
+  CopyPlus,
   Download,
   Heart,
   Loader2,
   MoreVertical,
   Trash2,
-  Copy as DuplicateIcon,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -48,6 +57,7 @@ export function VideoCard({ video, isFavorite }: VideoCardProps) {
   const router = useRouter();
   const [favorite, setFavorite] = useState(isFavorite);
   const [busy, setBusy] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
   const persona = getPersonaById(video.persona);
 
   async function toggleFavorite() {
@@ -63,6 +73,7 @@ export function VideoCard({ video, isFavorite }: VideoCardProps) {
     setBusy(true);
     const res = await fetch(`/api/videos/${video.id}`, { method: "DELETE" });
     setBusy(false);
+    setConfirmOpen(false);
     if (!res.ok) {
       toast.error("Suppression impossible.");
       return;
@@ -125,7 +136,9 @@ export function VideoCard({ video, isFavorite }: VideoCardProps) {
           </Button>
 
           <DropdownMenu>
-            <DropdownMenuTrigger render={<Button variant="ghost" size="icon" />}>
+            <DropdownMenuTrigger
+              render={<Button variant="ghost" size="icon" aria-label="Options de la vidéo" />}
+            >
               <MoreVertical className="size-4" />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
@@ -146,12 +159,12 @@ export function VideoCard({ video, isFavorite }: VideoCardProps) {
                 </DropdownMenuItem>
               )}
               <DropdownMenuItem onClick={handleDuplicate} disabled={busy}>
-                <DuplicateIcon className="size-4" />
+                <CopyPlus className="size-4" />
                 Dupliquer
               </DropdownMenuItem>
               <DropdownMenuItem
                 variant="destructive"
-                onClick={handleDelete}
+                onClick={() => setConfirmOpen(true)}
                 disabled={busy}
               >
                 <Trash2 className="size-4" />
@@ -161,6 +174,25 @@ export function VideoCard({ video, isFavorite }: VideoCardProps) {
           </DropdownMenu>
         </div>
       </div>
+
+      <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Supprimer cette vidéo ?</DialogTitle>
+            <DialogDescription>
+              Cette action est définitive. La vidéo et son fichier seront
+              supprimés — cela ne rembourse pas les crédits utilisés.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <DialogClose render={<Button variant="outline" />}>Annuler</DialogClose>
+            <Button variant="destructive" onClick={handleDelete} disabled={busy} className="gap-2">
+              {busy && <Loader2 className="size-4 animate-spin" />}
+              Supprimer
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

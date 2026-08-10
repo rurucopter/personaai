@@ -3,8 +3,6 @@ import { AvatarUpload } from "@/components/dashboard/avatar-upload";
 import { ProfileForm } from "@/components/dashboard/profile-form";
 import { PasswordForm } from "@/components/dashboard/password-form";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
-import { Switch } from "@/components/ui/switch";
 import type { UserRow } from "@/types/database";
 
 export default async function SettingsPage() {
@@ -50,36 +48,6 @@ export default async function SettingsPage() {
         </CardHeader>
         <CardContent>
           <PasswordForm />
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Notifications</CardTitle>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium">Génération terminée</p>
-              <p className="text-sm text-muted-foreground">
-                Recevoir un email quand une vidéo est prête.
-              </p>
-            </div>
-            <Switch defaultChecked disabled />
-          </div>
-          <Separator />
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium">Offres et actualités</p>
-              <p className="text-sm text-muted-foreground">
-                Nouveautés et offres promotionnelles.
-              </p>
-            </div>
-            <Switch disabled />
-          </div>
-          <p className="text-xs text-muted-foreground">
-            Les préférences de notification seront activables prochainement.
-          </p>
         </CardContent>
       </Card>
     </div>

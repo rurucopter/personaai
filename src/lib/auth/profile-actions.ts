@@ -25,7 +25,7 @@ export async function updateProfile(
   if (error) return { error: error.message };
 
   revalidatePath("/dashboard/settings");
-  return {};
+  return { success: true };
 }
 
 export async function updateAvatarUrl(avatarUrl: string): Promise<AuthActionResult> {

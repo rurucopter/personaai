@@ -1,6 +1,7 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect } from "react";
+import { toast } from "sonner";
 import { updateProfile } from "@/lib/auth/profile-actions";
 import { SubmitButton } from "@/components/auth/submit-button";
 import { Input } from "@/components/ui/input";
@@ -13,6 +14,10 @@ interface ProfileFormProps {
 
 export function ProfileForm({ email, fullName }: ProfileFormProps) {
   const [state, formAction] = useActionState(updateProfile, {});
+
+  useEffect(() => {
+    if (state?.success) toast.success("Profil mis à jour.");
+  }, [state]);
 
   return (
     <form action={formAction} className="flex flex-col gap-4">

@@ -1,5 +1,6 @@
 import { signOut } from "@/lib/auth/actions";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { DashboardMobileNav } from "@/components/dashboard/mobile-nav";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -29,7 +30,7 @@ export function DashboardTopbar({
 
   return (
     <header className="flex h-16 items-center justify-between border-b border-border px-6">
-      <div />
+      <DashboardMobileNav />
       <div className="flex items-center gap-3">
         <Badge
           variant="secondary"

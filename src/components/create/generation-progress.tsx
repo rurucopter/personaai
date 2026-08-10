@@ -22,7 +22,13 @@ function formatElapsed(seconds: number): string {
   return `${m}:${s.toString().padStart(2, "0")}`;
 }
 
-export function GenerationProgress({ initialVideo }: { initialVideo: VideoRow }) {
+export function GenerationProgress({
+  initialVideo,
+  onRestart,
+}: {
+  initialVideo: VideoRow;
+  onRestart?: () => void;
+}) {
   const video = useVideoProgress(initialVideo);
   const [now, setNow] = useState(() => Date.now());
 
@@ -66,9 +72,16 @@ export function GenerationProgress({ initialVideo }: { initialVideo: VideoRow })
             Retrouvez-la dans « Mes vidéos ».
           </p>
         </div>
-        <Button render={<Link href="/dashboard/videos" />} nativeButton={false}>
-          Voir mes vidéos
-        </Button>
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <Button render={<Link href="/dashboard/videos" />} nativeButton={false}>
+            Voir mes vidéos
+          </Button>
+          {onRestart && (
+            <Button variant="outline" onClick={onRestart}>
+              Nouvelle transformation
+            </Button>
+          )}
+        </div>
       </div>
     );
   }
@@ -83,6 +96,13 @@ export function GenerationProgress({ initialVideo }: { initialVideo: VideoRow })
             {video.error_message ?? "Vos crédits ont été remboursés."}
           </p>
         </div>
+        {onRestart ? (
+          <Button onClick={onRestart}>Réessayer</Button>
+        ) : (
+          <Button render={<Link href="/dashboard/create" />} nativeButton={false}>
+            Réessayer
+          </Button>
+        )}
       </div>
     );
   }

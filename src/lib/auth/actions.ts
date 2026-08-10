@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 
 export interface AuthActionResult {
   error?: string;
+  success?: boolean;
 }
 
 export async function signInWithPassword(
