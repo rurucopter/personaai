@@ -66,6 +66,81 @@ const TEMPLATES = [
     prompt:
       `Casual phone selfie of a 29 year old woman with short straight black hair, tan skin, relaxed neutral expression, plain casual clothing, photorealistic. ${ORDINARY_PERSON_SUFFIX}`,
   },
+  {
+    id: "student-young-man",
+    prompt:
+      `Casual phone selfie of a 19 year old young man with messy brown hair, light acne on the cheeks, faint patchy stubble, plain hoodie, student look, photorealistic. ${ORDINARY_PERSON_SUFFIX}`,
+  },
+  {
+    id: "blond-stubble-man",
+    prompt:
+      `Casual phone selfie of a 24 year old man with short blond hair, three-day stubble, plain t-shirt, ordinary everyday appearance, photorealistic. ${ORDINARY_PERSON_SUFFIX}`,
+  },
+  {
+    id: "asian-glasses-man",
+    prompt:
+      `Casual phone selfie of a 28 year old East Asian man with short black hair and simple glasses, neutral expression, plain shirt, everyday office-casual look, photorealistic. ${ORDINARY_PERSON_SUFFIX}`,
+  },
+  {
+    id: "beard-casual-man",
+    prompt:
+      `Casual phone selfie of a 35 year old North African man with a short dark beard and short black hair, relaxed everyday appearance, plain casual clothing, photorealistic. ${ORDINARY_PERSON_SUFFIX}`,
+  },
+  {
+    id: "balding-dad",
+    prompt:
+      `Casual phone selfie of a 43 year old man with a receding hairline, slight double chin, tired friendly expression, plain polo shirt, ordinary dad look, photorealistic. ${ORDINARY_PERSON_SUFFIX}`,
+  },
+  {
+    id: "greying-mature-man",
+    prompt:
+      `Casual phone photo of a 52 year old man with salt-and-pepper hair, visible forehead and eye wrinkles, plain button shirt, ordinary mature appearance, photorealistic. ${ORDINARY_PERSON_SUFFIX}`,
+  },
+  {
+    id: "senior-black-man",
+    prompt:
+      `Casual phone photo of a 60 year old Black man with short greying hair and a short grey beard, warm plain expression, simple clothing, photorealistic. ${ORDINARY_PERSON_SUFFIX}`,
+  },
+  {
+    id: "elderly-man",
+    prompt:
+      `Casual phone photo of a 70 year old elderly man with thin white hair, glasses, deep wrinkles and age spots, gentle plain expression, simple cardigan, photorealistic. ${ORDINARY_PERSON_SUFFIX}`,
+  },
+  {
+    id: "teen-braces-woman",
+    prompt:
+      `Casual phone selfie of a 19 year old young woman with long straight hair, dental braces, minimal makeup, plain t-shirt, ordinary student look, photorealistic. ${ORDINARY_PERSON_SUFFIX}`,
+  },
+  {
+    id: "asian-fringe-woman",
+    prompt:
+      `Casual phone selfie of a 26 year old East Asian woman with black hair and a straight fringe, no makeup, plain sweater, ordinary everyday appearance, photorealistic. ${ORDINARY_PERSON_SUFFIX}`,
+  },
+  {
+    id: "afro-natural-woman",
+    prompt:
+      `Casual phone selfie of a 31 year old Black woman with natural afro-textured hair, no makeup, plain top, ordinary everyday appearance, photorealistic. ${ORDINARY_PERSON_SUFFIX}`,
+  },
+  {
+    id: "midlife-woman",
+    prompt:
+      `Casual phone photo of a 48 year old woman with dyed mid-length hair showing some grey roots, visible expression lines, plain blouse, ordinary appearance, photorealistic. ${ORDINARY_PERSON_SUFFIX}`,
+  },
+  {
+    id: "short-grey-woman",
+    prompt:
+      `Casual phone photo of a 56 year old woman with short grey hair and glasses, soft wrinkles, plain cardigan, ordinary mature appearance, photorealistic. ${ORDINARY_PERSON_SUFFIX}`,
+  },
+  {
+    id: "senior-woman",
+    prompt:
+      `Casual phone photo of a 64 year old woman with short curly white hair, warm wrinkled face, simple clothing, ordinary grandmother appearance, photorealistic. ${ORDINARY_PERSON_SUFFIX}`,
+  },
+  {
+    id: "elderly-woman",
+    prompt:
+      `Casual phone photo of a 73 year old elderly woman with thin white hair, deep wrinkles and age spots, gentle plain expression, simple blouse, photorealistic. ${ORDINARY_PERSON_SUFFIX}`,
+  },
 ];
 
 async function generateImage(prompt) {
@@ -119,9 +194,25 @@ async function uploadToSupabase(path, bytes) {
   if (!res.ok) throw new Error(`Supabase upload error: ${res.status} ${await res.text()}`);
 }
 
+// Idempotent: skip templates whose image already exists in the bucket, so
+// re-runs only fill in newly-added avatars and never regenerate (and change)
+// the ones existing characters already reference. Pass FORCE=1 to override.
+async function alreadyExists(id) {
+  if (process.env.FORCE === "1") return false;
+  const res = await fetch(
+    `${SUPABASE_URL}/storage/v1/object/public/avatar-templates/${id}.jpg`,
+    { method: "HEAD" }
+  );
+  return res.ok;
+}
+
 async function main() {
   const results = {};
   for (const t of TEMPLATES) {
+    if (await alreadyExists(t.id)) {
+      console.log(`Skipping ${t.id} (already exists)`);
+      continue;
+    }
     process.stdout.write(`Generating ${t.id}... `);
     try {
       const imageUrl = await generateImage(t.prompt);
