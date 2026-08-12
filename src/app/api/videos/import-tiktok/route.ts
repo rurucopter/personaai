@@ -48,7 +48,9 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         error:
-          "Impossible de télécharger cette vidéo. Vérifiez que le lien est correct et que la vidéo est publique.",
+          "Impossible de récupérer cette vidéo depuis TikTok pour le moment. " +
+          "TikTok bloque parfois le téléchargement automatique — enregistrez la " +
+          "vidéo sur votre appareil, puis importez-la via l'onglet « Fichier ».",
       },
       { status: 422 }
     );
