@@ -16,7 +16,10 @@
 export function buildWebhookUrl(path: string): string | undefined {
   const base = process.env.NEXT_PUBLIC_APP_URL;
   const secret = process.env.WEBHOOK_SECRET;
-  if (!base || !secret) return undefined;
+  // Only register a webhook when we have a public HTTPS base (prod). Providers
+  // can't reach an http://localhost URL and may reject it outright, so in local
+  // dev we return undefined and let the client-side poll fallback drive status.
+  if (!base || !secret || !base.startsWith("https://")) return undefined;
 
   const url = new URL(path, base);
   url.searchParams.set("secret", secret);
