@@ -15,6 +15,7 @@ import type { CharacterRow, VideoRow } from "@/types/database";
 
 const CHARACTER_PREFIX = "character:";
 const TEMPLATE_PREFIX = "template:";
+const PHOTO_PREFIX = "photo:";
 
 interface BecomeTarget {
   imageUrl: string;
@@ -84,6 +85,17 @@ export async function POST(
   } else if (settings.persona.startsWith(TEMPLATE_PREFIX)) {
     const template = getAvatarTemplateById(settings.persona.slice(TEMPLATE_PREFIX.length));
     if (template) becomeTarget = { imageUrl: template.imageUrl, description: template.description };
+  } else if (settings.persona.startsWith(PHOTO_PREFIX)) {
+    const photoPath = settings.persona.slice(PHOTO_PREFIX.length);
+    const { data: signedPhoto } = await supabase.storage
+      .from("video-frames")
+      .createSignedUrl(photoPath, 60 * 60);
+    if (signedPhoto?.signedUrl) {
+      becomeTarget = {
+        imageUrl: signedPhoto.signedUrl,
+        description: "the exact person shown in the reference photo",
+      };
+    }
   }
 
   const { data: video, error: insertError } = await supabase

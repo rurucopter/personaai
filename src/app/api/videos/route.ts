@@ -17,6 +17,7 @@ import type { CharacterRow } from "@/types/database";
 
 const CHARACTER_PREFIX = "character:";
 const TEMPLATE_PREFIX = "template:";
+const PHOTO_PREFIX = "photo:";
 
 // Both AI characters and ready-made avatar templates drive "become" mode:
 // the video's person is replaced by this target face. Unifying them here lets
@@ -72,6 +73,22 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Avatar introuvable." }, { status: 400 });
     }
     becomeTarget = { imageUrl: template.imageUrl, description: template.description };
+  } else if (body.personaId.startsWith(PHOTO_PREFIX)) {
+    const photoPath = body.personaId.slice(PHOTO_PREFIX.length);
+    const { data: signedPhoto } = await supabase.storage
+      .from("video-frames")
+      .createSignedUrl(photoPath, 60 * 60);
+
+    if (!signedPhoto?.signedUrl) {
+      return NextResponse.json({ error: "Photo introuvable." }, { status: 400 });
+    }
+    // No text description for a freely-uploaded photo — the identity lock
+    // comes from the reference image itself (provider "become" mechanism),
+    // this text just needs to point at it without contradicting that.
+    becomeTarget = {
+      imageUrl: signedPhoto.signedUrl,
+      description: "the exact person shown in the reference photo",
+    };
   } else if (!getPersonaById(body.personaId)) {
     return NextResponse.json({ error: "Persona inconnu." }, { status: 400 });
   }

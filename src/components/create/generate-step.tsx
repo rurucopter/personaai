@@ -35,8 +35,9 @@ export function GenerateStep({
   const template = personaId.startsWith("template:")
     ? getAvatarTemplateById(personaId.slice("template:".length))
     : undefined;
-  const persona = character || template ? undefined : getPersonaById(personaId);
-  const label = character?.name ?? template?.name ?? persona?.label;
+  const isCustomPhoto = personaId.startsWith("photo:");
+  const persona = character || template || isCustomPhoto ? undefined : getPersonaById(personaId);
+  const label = character?.name ?? template?.name ?? (isCustomPhoto ? "Photo importée" : persona?.label);
   const insufficientCredits = creditBalance < cost;
 
   return (
