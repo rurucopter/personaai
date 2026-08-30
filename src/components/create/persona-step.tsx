@@ -9,11 +9,66 @@ import { cn } from "@/lib/utils";
 import type { CharacterRow } from "@/types/database";
 
 const PHOTO_PREFIX = "photo:";
+const MAX_PHOTO_BYTES = 4.5 * 1024 * 1024;
+const MAX_PHOTO_DIMENSION = 2048;
 
 interface PersonaStepProps {
   selected: string | null;
   onSelect: (personaId: string) => void;
   characters: CharacterRow[];
+}
+
+function canvasToJpegBlob(canvas: HTMLCanvasElement, quality: number): Promise<Blob> {
+  return new Promise((resolve, reject) => {
+    canvas.toBlob(
+      (blob) => (blob ? resolve(blob) : reject(new Error("Échec de conversion de l'image."))),
+      "image/jpeg",
+      quality
+    );
+  });
+}
+
+/**
+ * Normalizes any browser-decodable image (PNG, GIF, BMP, WebP, AVIF, and —
+ * via heic2any — an iPhone's default HEIC/HEIF) into a JPEG blob before
+ * upload. The storage bucket only allow-lists jpeg/webp; converting client
+ * side means every format users actually hand us "just works" without
+ * chasing the bucket's mime allowlist for every new format that shows up.
+ */
+async function normalizeImageToJpeg(file: File): Promise<Blob> {
+  const isHeic = /heic|heif/i.test(file.type) || /\.hei[cf]$/i.test(file.name);
+
+  let source: Blob = file;
+  if (isHeic) {
+    const heic2any = (await import("heic2any")).default;
+    const converted = await heic2any({ blob: file, toType: "image/jpeg", quality: 0.92 });
+    source = Array.isArray(converted) ? converted[0] : converted;
+  }
+
+  const bitmap = await createImageBitmap(source);
+  const scale = Math.min(1, MAX_PHOTO_DIMENSION / Math.max(bitmap.width, bitmap.height));
+  const width = Math.max(1, Math.round(bitmap.width * scale));
+  const height = Math.max(1, Math.round(bitmap.height * scale));
+
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error("Impossible de traiter cette image.");
+  // Flatten on white first — a transparent PNG/WebP would otherwise turn
+  // black once forced into JPEG (no alpha channel).
+  ctx.fillStyle = "#fff";
+  ctx.fillRect(0, 0, width, height);
+  ctx.drawImage(bitmap, 0, 0, width, height);
+  bitmap.close();
+
+  let quality = 0.92;
+  let blob = await canvasToJpegBlob(canvas, quality);
+  while (blob.size > MAX_PHOTO_BYTES && quality > 0.4) {
+    quality -= 0.15;
+    blob = await canvasToJpegBlob(canvas, quality);
+  }
+  return blob;
 }
 
 export function PersonaStep({ selected, onSelect, characters }: PersonaStepProps) {
@@ -26,7 +81,9 @@ export function PersonaStep({ selected, onSelect, characters }: PersonaStepProps
   const isPhotoSelected = selected?.startsWith(PHOTO_PREFIX) ?? false;
 
   async function handlePhotoFile(file: File) {
-    if (!file.type.startsWith("image/")) {
+    const looksLikeImage =
+      file.type.startsWith("image/") || /\.(png|jpe?g|webp|gif|bmp|heic|heif|avif)$/i.test(file.name);
+    if (!looksLikeImage) {
       setError("Veuillez choisir une image.");
       return;
     }
@@ -45,17 +102,26 @@ export function PersonaStep({ selected, onSelect, characters }: PersonaStepProps
         return;
       }
 
+      let normalized: Blob;
+      try {
+        normalized = await normalizeImageToJpeg(file);
+      } catch (err) {
+        console.error("Photo normalization failed:", err);
+        setError("Ce format d'image n'est pas pris en charge par votre navigateur.");
+        return;
+      }
+
       const path = `${user.id}/${Date.now()}-custom-photo.jpg`;
       const { error: uploadError } = await supabase.storage
         .from("video-frames")
-        .upload(path, file, { contentType: file.type });
+        .upload(path, normalized, { contentType: "image/jpeg" });
 
       if (uploadError) {
         setError(uploadError.message);
         return;
       }
 
-      setPhotoPreview(URL.createObjectURL(file));
+      setPhotoPreview(URL.createObjectURL(normalized));
       onSelect(`${PHOTO_PREFIX}${path}`);
     } finally {
       setUploading(false);
@@ -101,7 +167,7 @@ export function PersonaStep({ selected, onSelect, characters }: PersonaStepProps
         <input
           ref={inputRef}
           type="file"
-          accept="image/png,image/jpeg,image/webp"
+          accept="image/*,.heic,.heif"
           className="hidden"
           onChange={(e) => {
             const file = e.target.files?.[0];
