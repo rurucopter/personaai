@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { StepIndicator } from "@/components/create/step-indicator";
@@ -10,6 +10,7 @@ import { GenerateStep } from "@/components/create/generate-step";
 import { GenerationProgress } from "@/components/create/generation-progress";
 import { Button } from "@/components/ui/button";
 import { computeStoryVideoCost } from "@/lib/credit-costs";
+import { readPendingCreation } from "@/lib/pending-creation";
 import type { VideoRow } from "@/types/database";
 
 interface CreationWizardProps {
@@ -26,6 +27,18 @@ export function CreationWizard({ creditBalance }: CreationWizardProps) {
   const [video, setVideo] = useState<VideoRow | null>(null);
 
   const cost = computeStoryVideoCost(durationSeconds);
+
+  // Picks up the story/style a visitor already chose on the homepage before
+  // logging in, so they land straight on the review step instead of
+  // re-typing everything they just entered a moment ago.
+  useEffect(() => {
+    const pending = readPendingCreation();
+    if (!pending) return;
+    setStory(pending.story);
+    setPersonaId(pending.personaId);
+    setDurationSeconds(pending.durationSeconds);
+    setStep(3);
+  }, []);
 
   const canGoNext = (step === 1 && story.trim().length > 0) || step === 2;
 

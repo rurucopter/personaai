@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { requireOwner } from "@/lib/auth/require-owner";
 import { DashboardSidebar } from "@/components/dashboard/sidebar";
 import { DashboardTopbar } from "@/components/dashboard/topbar";
+import { PendingCreationRedirect } from "@/components/dashboard/pending-creation-redirect";
 import type { CreditsRow, UserRow } from "@/types/database";
 
 export default async function DashboardLayout({
@@ -19,6 +20,7 @@ export default async function DashboardLayout({
 
   return (
     <div className="flex min-h-screen">
+      <PendingCreationRedirect />
       <DashboardSidebar />
       <div className="flex flex-1 flex-col">
         <DashboardTopbar
