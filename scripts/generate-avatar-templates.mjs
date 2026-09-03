@@ -35,7 +35,28 @@ const IMPERFECTION_SUFFIX =
 const ORDINARY_PERSON_SUFFIX =
   "This is an ordinary, average-looking real person, not a model or influencer — plain, unremarkable, everyday features. Candid unretouched phone snapshot, bad indoor lighting is fine, slightly imperfect framing. Real skin texture with visible pores, blemishes, uneven tone, redness, or blotchiness. Natural facial asymmetry, imperfect teeth alignment, tired or plain expression is fine — do not make this person look conventionally attractive, glamorous, or like a professional model. Avoid symmetry, smoothness, or any polished/synthetic AI look.";
 
+// For original, non-photorealistic "character" avatars (e.g. the talking
+// fruit trend) — explicitly steers toward a generic, original design so we
+// never reproduce an existing copyrighted/trademarked character.
+const CARTOON_FRUIT_SUFFIX =
+  "Simple flat vector illustration style, bold clean outlines, bright saturated colors, plain solid-color background, no text, no watermark, no logos. Completely original character design, not based on any existing movie, show, game, or franchise character.";
+
 const TEMPLATES = [
+  {
+    id: "talking-banana",
+    prompt:
+      `An original cute cartoon character shaped like a whole banana, with big round googly eyes and a wide cheerful open-mouth smile, simple thin stick arms, bright yellow peel. ${CARTOON_FRUIT_SUFFIX}`,
+  },
+  {
+    id: "talking-strawberry",
+    prompt:
+      `An original cute cartoon character shaped like a strawberry, with big round googly eyes and a playful smile, a small green leaf tuft on top, bright red skin with small seed dots. ${CARTOON_FRUIT_SUFFIX}`,
+  },
+  {
+    id: "talking-watermelon",
+    prompt:
+      `An original cute cartoon character shaped like a triangular watermelon slice, with big round googly eyes and a wide happy smile, bright pink flesh, green rind edge, small black seeds. ${CARTOON_FRUIT_SUFFIX}`,
+  },
   {
     id: "blonde-lifestyle",
     prompt:

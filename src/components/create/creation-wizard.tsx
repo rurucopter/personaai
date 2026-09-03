@@ -130,7 +130,7 @@ export function CreationWizard({ creditBalance, characters }: CreationWizardProp
             />
           )}
           {step === 2 && (
-            <PersonaStep selected={personaId} onSelect={setPersonaId} characters={characters} />
+            <PersonaStep selected={personaId} onSelect={setPersonaId} />
           )}
           {step === 3 && (
             <CustomizeStep settings={settings} onChange={setSettings} />
