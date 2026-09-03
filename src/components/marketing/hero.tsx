@@ -4,7 +4,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { ArrowRight, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { BrowserMockup } from "@/components/marketing/browser-mockup";
+import { StyleShowcase } from "@/components/marketing/style-showcase";
 
 export function Hero() {
   return (
@@ -46,9 +46,8 @@ export function Hero() {
           transition={{ duration: 0.5, delay: 0.1 }}
           className="max-w-xl text-lg text-muted-foreground"
         >
-          Importez une vidéo de vous-même et transformez votre style, votre
-          énergie et votre univers grâce à l&apos;IA — tout en conservant
-          votre identité.
+          Importez une vidéo de vous-même et transformez-la en personnage 3D
+          façon Pixar, ou en fruit rigolo qui parle — grâce à l&apos;IA.
         </motion.p>
 
         <motion.div
@@ -63,7 +62,7 @@ export function Hero() {
             render={<Link href="/signup" />}
             nativeButton={false}
           >
-            Créer mon premier persona
+            Créer ma première vidéo
             <ArrowRight className="size-4" />
           </Button>
           <Button
@@ -77,8 +76,8 @@ export function Hero() {
         </motion.div>
       </div>
 
-      <div className="px-6 pb-24">
-        <BrowserMockup />
+      <div className="pb-24">
+        <StyleShowcase />
       </div>
     </section>
   );

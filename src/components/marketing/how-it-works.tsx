@@ -8,8 +8,8 @@ const STEPS = [
   },
   {
     number: "02",
-    title: "Choisissez un persona",
-    description: "CEO, Viking, Cyberpunk, Anime... plus de 15 univers.",
+    title: "Choisissez un style",
+    description: "Style 3D Pixar, ou fruit rigolo qui parle.",
   },
   {
     number: "03",
