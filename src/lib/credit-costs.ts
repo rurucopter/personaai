@@ -11,3 +11,14 @@ export function computeGenerationCost(settings: TransformationSettings): number 
 }
 
 export const CHARACTER_IMAGE_COST = 1;
+
+const STORY_VIDEO_COST: Record<5 | 10, number> = {
+  5: 2,
+  10: 4,
+};
+
+/** Text-to-video generation costs more per clip than restyling an existing
+ *  video, so it's priced separately, by requested duration. */
+export function computeStoryVideoCost(durationSeconds: 5 | 10): number {
+  return STORY_VIDEO_COST[durationSeconds];
+}

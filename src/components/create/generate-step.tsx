@@ -5,11 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { getPersonaById } from "@/lib/personas";
 import { getAvatarTemplateById } from "@/lib/avatar-templates";
-import type { TransformationSettings } from "@/types/ai-provider";
 
 interface GenerateStepProps {
   personaId: string;
-  settings: Omit<TransformationSettings, "persona">;
   cost: number;
   creditBalance: number;
   submitting: boolean;
@@ -19,7 +17,6 @@ interface GenerateStepProps {
 
 export function GenerateStep({
   personaId,
-  settings,
   cost,
   creditBalance,
   submitting,
@@ -37,12 +34,7 @@ export function GenerateStep({
     <div className="flex flex-col gap-6">
       <div className="rounded-xl border border-border p-6">
         <p className="mb-3 text-sm font-medium text-muted-foreground">Récapitulatif</p>
-        <div className="flex flex-wrap gap-2">
-          <Badge variant="secondary">{label}</Badge>
-          {settings.outfitStyle && <Badge variant="secondary">{settings.outfitStyle}</Badge>}
-          {settings.background && <Badge variant="secondary">{settings.background}</Badge>}
-          {settings.quality && <Badge variant="secondary">Qualité {settings.quality}</Badge>}
-        </div>
+        <Badge variant="secondary">{label}</Badge>
       </div>
 
       <div className="flex items-center justify-between rounded-xl border border-border p-6">

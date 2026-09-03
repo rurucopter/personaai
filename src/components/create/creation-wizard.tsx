@@ -4,21 +4,13 @@ import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { StepIndicator } from "@/components/create/step-indicator";
-import { UploadStep, type UploadedVideoMeta } from "@/components/create/upload-step";
+import { StoryStep } from "@/components/create/story-step";
 import { PersonaStep } from "@/components/create/persona-step";
-import { CustomizeStep } from "@/components/create/customize-step";
 import { GenerateStep } from "@/components/create/generate-step";
 import { GenerationProgress } from "@/components/create/generation-progress";
 import { Button } from "@/components/ui/button";
-import { computeGenerationCost } from "@/lib/credit-costs";
-import type { TransformationSettings } from "@/types/ai-provider";
+import { computeStoryVideoCost } from "@/lib/credit-costs";
 import type { VideoRow } from "@/types/database";
-
-const DEFAULT_SETTINGS: Omit<TransformationSettings, "persona"> = {
-  quality: "standard",
-  energyLevel: 50,
-  smileLevel: 50,
-};
 
 interface CreationWizardProps {
   creditBalance: number;
@@ -26,29 +18,19 @@ interface CreationWizardProps {
 
 export function CreationWizard({ creditBalance }: CreationWizardProps) {
   const [step, setStep] = useState(1);
-  const [sourceVideoPath, setSourceVideoPath] = useState<string | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [durationSeconds, setDurationSeconds] = useState<number | null>(null);
-  const [referenceFramePath, setReferenceFramePath] = useState<string | null>(null);
-  const [sourceDimensions, setSourceDimensions] = useState<{ width: number; height: number } | null>(
-    null
-  );
+  const [story, setStory] = useState("");
+  const [durationSeconds, setDurationSeconds] = useState<5 | 10>(5);
   const [personaId, setPersonaId] = useState<string | null>(null);
-  const [settings, setSettings] =
-    useState<Omit<TransformationSettings, "persona">>(DEFAULT_SETTINGS);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [video, setVideo] = useState<VideoRow | null>(null);
 
-  const cost = computeGenerationCost({ ...settings, persona: personaId ?? "" });
+  const cost = computeStoryVideoCost(durationSeconds);
 
-  const canGoNext =
-    (step === 1 && !!sourceVideoPath) ||
-    (step === 2 && !!personaId) ||
-    step === 3;
+  const canGoNext = (step === 1 && story.trim().length > 0) || step === 2;
 
   async function handleGenerate() {
-    if (!sourceVideoPath || !personaId) return;
+    if (!story.trim() || !personaId) return;
     setSubmitting(true);
     setError(null);
 
@@ -57,13 +39,9 @@ export function CreationWizard({ creditBalance }: CreationWizardProps) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          sourceVideoPath,
-          sourceDurationSeconds: durationSeconds,
-          referenceFramePath,
-          sourceWidth: sourceDimensions?.width,
-          sourceHeight: sourceDimensions?.height,
+          story,
           personaId,
-          settings,
+          durationSeconds,
         }),
       });
 
@@ -83,13 +61,9 @@ export function CreationWizard({ creditBalance }: CreationWizardProps) {
   function resetWizard() {
     setVideo(null);
     setStep(1);
-    setSourceVideoPath(null);
-    setPreviewUrl(null);
-    setDurationSeconds(null);
-    setReferenceFramePath(null);
-    setSourceDimensions(null);
+    setStory("");
+    setDurationSeconds(5);
     setPersonaId(null);
-    setSettings(DEFAULT_SETTINGS);
     setError(null);
   }
 
@@ -110,34 +84,17 @@ export function CreationWizard({ creditBalance }: CreationWizardProps) {
           transition={{ duration: 0.2 }}
         >
           {step === 1 && (
-            <UploadStep
-              previewUrl={previewUrl}
-              onUploaded={(meta: UploadedVideoMeta) => {
-                setSourceVideoPath(meta.path);
-                setDurationSeconds(meta.durationSeconds);
-                setPreviewUrl(meta.previewUrl);
-                setReferenceFramePath(meta.referenceFramePath);
-                setSourceDimensions({ width: meta.width, height: meta.height });
-              }}
-              onReset={() => {
-                setSourceVideoPath(null);
-                setPreviewUrl(null);
-                setDurationSeconds(null);
-                setReferenceFramePath(null);
-                setSourceDimensions(null);
-              }}
+            <StoryStep
+              story={story}
+              onStoryChange={setStory}
+              durationSeconds={durationSeconds}
+              onDurationChange={setDurationSeconds}
             />
           )}
-          {step === 2 && (
-            <PersonaStep selected={personaId} onSelect={setPersonaId} />
-          )}
-          {step === 3 && (
-            <CustomizeStep settings={settings} onChange={setSettings} />
-          )}
-          {step === 4 && personaId && (
+          {step === 2 && <PersonaStep selected={personaId} onSelect={setPersonaId} />}
+          {step === 3 && personaId && (
             <GenerateStep
               personaId={personaId}
-              settings={settings}
               cost={cost}
               creditBalance={creditBalance}
               submitting={submitting}
@@ -148,7 +105,7 @@ export function CreationWizard({ creditBalance }: CreationWizardProps) {
         </motion.div>
       </AnimatePresence>
 
-      {step < 4 && (
+      {step < 3 && (
         <div className="flex justify-between">
           <Button
             variant="outline"
@@ -169,8 +126,8 @@ export function CreationWizard({ creditBalance }: CreationWizardProps) {
           </Button>
         </div>
       )}
-      {step === 4 && (
-        <Button variant="outline" className="w-fit gap-1" onClick={() => setStep(3)}>
+      {step === 3 && (
+        <Button variant="outline" className="w-fit gap-1" onClick={() => setStep(2)}>
           <ChevronLeft className="size-4" />
           Précédent
         </Button>

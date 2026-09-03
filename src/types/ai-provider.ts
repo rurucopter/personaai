@@ -12,7 +12,7 @@ export type GenerationStatus =
   | "cancelled";
 
 export interface TransformationSettings {
-  persona: string; // e.g. "ceo", "cyberpunk", "viking"
+  persona: string; // e.g. "pixar-3d", "template:talking-banana"
   outfitStyle?: string;
   hairStyle?: string;
   colorPalette?: string;
@@ -27,7 +27,8 @@ export interface TransformationSettings {
 }
 
 export interface GenerationJobInput {
-  sourceVideoUrl: string;
+  /** Omitted for pure text-to-video generation — no source clip to edit. */
+  sourceVideoUrl?: string;
   settings: TransformationSettings;
   /** Final prompt text, built once by the caller — adapters use this as-is
    *  rather than each re-deriving it from `settings`. */
@@ -47,6 +48,10 @@ export interface GenerationJobInput {
    *  instead of defaulting to landscape and cropping a vertical clip. */
   sourceWidth?: number;
   sourceHeight?: number;
+  /** Text-to-video only: requested clip length in seconds. */
+  durationSeconds?: 5 | 10;
+  /** Text-to-video only: output frame aspect ratio. */
+  aspectRatio?: "16:9" | "9:16" | "1:1";
 }
 
 export interface GenerationJobHandle {

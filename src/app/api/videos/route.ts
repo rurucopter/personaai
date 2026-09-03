@@ -1,13 +1,10 @@
 import { NextResponse } from "next/server";
 import { createClient, createServiceRoleClient } from "@/lib/supabase/server";
 import { getVideoProvider } from "@/lib/ai/registry";
-import { computeGenerationCost } from "@/lib/credit-costs";
+import { computeStoryVideoCost } from "@/lib/credit-costs";
 import { isUnderGenerationRateLimit } from "@/lib/rate-limit";
 import { getPersonaById } from "@/lib/personas";
-import {
-  buildCharacterTransformationPrompt,
-  buildTransformationPrompt,
-} from "@/lib/ai/prompt-builder";
+import { buildStoryPrompt } from "@/lib/ai/prompt-builder";
 import { buildWebhookUrl } from "@/lib/webhooks";
 import { failVideoAndRefund } from "@/lib/generation-finalize";
 import { readJson } from "@/lib/http";
@@ -15,22 +12,19 @@ import { getAvatarTemplateById } from "@/lib/avatar-templates";
 import type { GenerationJobInput, TransformationSettings } from "@/types/ai-provider";
 
 const TEMPLATE_PREFIX = "template:";
-
-// A ready-made avatar template drives "become" mode: the video's person is
-// replaced by this target face.
-interface BecomeTarget {
-  imageUrl: string;
-  description: string;
-}
+const MAX_STORY_LENGTH = 1000;
 
 interface CreateVideoBody {
-  sourceVideoPath: string;
-  sourceDurationSeconds?: number;
-  referenceFramePath?: string | null;
-  sourceWidth?: number;
-  sourceHeight?: number;
+  story: string;
   personaId: string;
-  settings: Omit<TransformationSettings, "persona">;
+  durationSeconds?: 5 | 10;
+}
+
+function resolveStyleDescription(personaId: string): string | null {
+  if (personaId.startsWith(TEMPLATE_PREFIX)) {
+    return getAvatarTemplateById(personaId.slice(TEMPLATE_PREFIX.length))?.description ?? null;
+  }
+  return getPersonaById(personaId)?.promptDescription ?? null;
 }
 
 export async function POST(request: Request) {
@@ -44,19 +38,20 @@ export async function POST(request: Request) {
   }
 
   const body = await readJson<CreateVideoBody>(request);
-  if (!body?.personaId || !body.sourceVideoPath) {
+  const story = body?.story?.trim();
+  if (!body?.personaId || !story) {
     return NextResponse.json({ error: "Requête invalide." }, { status: 400 });
   }
-  let becomeTarget: BecomeTarget | null = null;
+  if (story.length > MAX_STORY_LENGTH) {
+    return NextResponse.json(
+      { error: `Histoire trop longue (${MAX_STORY_LENGTH} caractères maximum).` },
+      { status: 400 }
+    );
+  }
 
-  if (body.personaId.startsWith(TEMPLATE_PREFIX)) {
-    const template = getAvatarTemplateById(body.personaId.slice(TEMPLATE_PREFIX.length));
-    if (!template) {
-      return NextResponse.json({ error: "Avatar introuvable." }, { status: 400 });
-    }
-    becomeTarget = { imageUrl: template.imageUrl, description: template.description };
-  } else if (!getPersonaById(body.personaId)) {
-    return NextResponse.json({ error: "Persona inconnu." }, { status: 400 });
+  const styleDescription = resolveStyleDescription(body.personaId);
+  if (!styleDescription) {
+    return NextResponse.json({ error: "Style inconnu." }, { status: 400 });
   }
 
   if (!(await isUnderGenerationRateLimit(supabase, user.id))) {
@@ -66,8 +61,9 @@ export async function POST(request: Request) {
     );
   }
 
-  const settings: TransformationSettings = { ...body.settings, persona: body.personaId };
-  const cost = computeGenerationCost(settings);
+  const durationSeconds: 5 | 10 = body.durationSeconds === 10 ? 10 : 5;
+  const settings: TransformationSettings = { persona: body.personaId };
+  const cost = computeStoryVideoCost(durationSeconds);
 
   const service = createServiceRoleClient();
 
@@ -85,33 +81,13 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Crédits insuffisants." }, { status: 402 });
   }
 
-  const { data: sourceUrlData } = await supabase.storage
-    .from("source-videos")
-    .createSignedUrl(body.sourceVideoPath, 60 * 60);
-
-  // Become mode replaces the person, so it targets the avatar/character's own
-  // face rather than preserving the user's — the user's captured frame
-  // (if any) isn't relevant here.
-  const referenceImageUrl = becomeTarget
-    ? becomeTarget.imageUrl
-    : body.referenceFramePath
-      ? (
-          await supabase.storage
-            .from("video-frames")
-            .createSignedUrl(body.referenceFramePath, 60 * 60)
-        ).data?.signedUrl
-      : undefined;
-
-  const prompt = becomeTarget
-    ? buildCharacterTransformationPrompt(becomeTarget.description, body.settings)
-    : buildTransformationPrompt(settings);
+  const prompt = buildStoryPrompt(styleDescription, story);
 
   const { data: video, error: insertError } = await supabase
     .from("videos")
     .insert({
       user_id: user.id,
-      source_video_url: body.sourceVideoPath,
-      source_duration_seconds: body.sourceDurationSeconds ?? null,
+      story,
       persona: body.personaId,
       settings,
       provider: process.env.DEFAULT_AI_PROVIDER ?? "fal",
@@ -139,14 +115,11 @@ export async function POST(request: Request) {
   try {
     const provider = getVideoProvider();
     const jobInput: GenerationJobInput = {
-      sourceVideoUrl: sourceUrlData?.signedUrl ?? body.sourceVideoPath,
       settings,
       prompt,
       webhookUrl: buildWebhookUrl("/api/webhooks/generation"),
-      referenceImageUrl,
-      referenceMode: becomeTarget ? "become" : "preserve",
-      sourceWidth: body.sourceWidth,
-      sourceHeight: body.sourceHeight,
+      durationSeconds,
+      aspectRatio: "9:16",
     };
 
     const handle = await provider.submitJob(jobInput);

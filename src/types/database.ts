@@ -92,8 +92,10 @@ export interface VideoRow {
   id: string;
   user_id: string;
   project_id: string | null;
-  source_video_url: string;
+  source_video_url: string | null;
   source_duration_seconds: number | null;
+  /** The user's written story/prompt — set for text-to-video generations. */
+  story: string | null;
   persona: string;
   settings: Record<string, unknown>;
   provider: string;

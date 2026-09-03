@@ -104,3 +104,20 @@ export function buildCharacterTransformationPrompt(
     .filter(Boolean)
     .join(" ");
 }
+
+/**
+ * Builds a prompt for pure text-to-video generation: no source clip exists,
+ * so there's nothing to "preserve" — the style description and the user's
+ * story are simply combined. Deliberately skips REALISM_FOOTER: that's
+ * tuned to keep a real uploaded face photoreal, which would fight a
+ * stylized (Pixar-3D, cartoon fruit) look here.
+ */
+export function buildStoryPrompt(styleDescription: string, story: string): string {
+  return [
+    `${styleDescription}.`,
+    story.trim(),
+    "High-quality, coherent scene with fluid natural motion and clear, well-paced dialogue delivery.",
+  ]
+    .filter(Boolean)
+    .join(" ");
+}

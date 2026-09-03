@@ -1,12 +1,10 @@
 import { NextResponse } from "next/server";
 import { createClient, createServiceRoleClient } from "@/lib/supabase/server";
 import { getVideoProvider } from "@/lib/ai/registry";
-import { computeGenerationCost } from "@/lib/credit-costs";
+import { computeStoryVideoCost } from "@/lib/credit-costs";
 import { isUnderGenerationRateLimit } from "@/lib/rate-limit";
-import {
-  buildCharacterTransformationPrompt,
-  buildTransformationPrompt,
-} from "@/lib/ai/prompt-builder";
+import { getPersonaById } from "@/lib/personas";
+import { buildStoryPrompt } from "@/lib/ai/prompt-builder";
 import { buildWebhookUrl } from "@/lib/webhooks";
 import { failVideoAndRefund } from "@/lib/generation-finalize";
 import { getAvatarTemplateById } from "@/lib/avatar-templates";
@@ -15,9 +13,11 @@ import type { VideoRow } from "@/types/database";
 
 const TEMPLATE_PREFIX = "template:";
 
-interface BecomeTarget {
-  imageUrl: string;
-  description: string;
+function resolveStyleDescription(personaId: string): string | null {
+  if (personaId.startsWith(TEMPLATE_PREFIX)) {
+    return getAvatarTemplateById(personaId.slice(TEMPLATE_PREFIX.length))?.description ?? null;
+  }
+  return getPersonaById(personaId)?.promptDescription ?? null;
 }
 
 export async function POST(
@@ -41,7 +41,7 @@ export async function POST(
     .eq("user_id", user.id)
     .single<VideoRow>();
 
-  if (!source) {
+  if (!source?.story) {
     return NextResponse.json({ error: "Vidéo introuvable." }, { status: 404 });
   }
 
@@ -53,7 +53,13 @@ export async function POST(
   }
 
   const settings = source.settings as unknown as TransformationSettings;
-  const cost = computeGenerationCost(settings);
+  const styleDescription = resolveStyleDescription(settings.persona);
+  if (!styleDescription) {
+    return NextResponse.json({ error: "Style inconnu." }, { status: 400 });
+  }
+
+  const durationSeconds: 5 | 10 = 5;
+  const cost = computeStoryVideoCost(durationSeconds);
   const service = createServiceRoleClient();
 
   const { data: canSpend, error: spendError } = await service.rpc("spend_credits", {
@@ -68,19 +74,12 @@ export async function POST(
   }
   if (!canSpend) return NextResponse.json({ error: "Crédits insuffisants." }, { status: 402 });
 
-  let becomeTarget: BecomeTarget | null = null;
-  if (settings.persona.startsWith(TEMPLATE_PREFIX)) {
-    const template = getAvatarTemplateById(settings.persona.slice(TEMPLATE_PREFIX.length));
-    if (template) becomeTarget = { imageUrl: template.imageUrl, description: template.description };
-  }
-
   const { data: video, error: insertError } = await supabase
     .from("videos")
     .insert({
       user_id: user.id,
       project_id: source.project_id,
-      source_video_url: source.source_video_url,
-      source_duration_seconds: source.source_duration_seconds,
+      story: source.story,
       persona: source.persona,
       settings,
       provider: source.provider,
@@ -98,25 +97,18 @@ export async function POST(
     );
   }
 
-  const { data: sourceUrlData } = await supabase.storage
-    .from("source-videos")
-    .createSignedUrl(source.source_video_url, 60 * 60);
-
-  const prompt = becomeTarget
-    ? buildCharacterTransformationPrompt(becomeTarget.description, settings)
-    : buildTransformationPrompt(settings);
+  const prompt = buildStoryPrompt(styleDescription, source.story);
 
   let finalVideo = video;
 
   try {
     const provider = getVideoProvider(source.provider);
     const jobInput: GenerationJobInput = {
-      sourceVideoUrl: sourceUrlData?.signedUrl ?? source.source_video_url,
       settings,
       prompt,
       webhookUrl: buildWebhookUrl("/api/webhooks/generation"),
-      referenceImageUrl: becomeTarget?.imageUrl,
-      referenceMode: becomeTarget ? "become" : "preserve",
+      durationSeconds,
+      aspectRatio: "9:16",
     };
 
     const handle = await provider.submitJob(jobInput);

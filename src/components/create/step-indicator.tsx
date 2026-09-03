@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils";
 import { Check } from "lucide-react";
 
-const STEPS = ["Importer", "Persona", "Personnaliser", "Générer"];
+const STEPS = ["Histoire", "Style", "Générer"];
 
 export function StepIndicator({ current }: { current: number }) {
   return (

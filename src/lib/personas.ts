@@ -16,7 +16,7 @@ export const PERSONAS: Persona[] = [
     category: "Style",
     description: "Personnage animé 3D façon film Pixar, rendu cinéma, yeux expressifs.",
     promptDescription:
-      "restyled as a high-quality 3D animated character in a warm modern Pixar/Disney-style CG movie look — smooth semi-realistic skin shading, soft rounded features, big expressive eyes, polished cinematic 3D render, soft warm lighting like a premium animated film",
+      "A scene rendered in a warm modern Pixar/Disney-style 3D animated movie look — characters with smooth semi-realistic shading, soft rounded features, big expressive eyes, polished cinematic 3D render, soft warm lighting like a premium animated film",
   },
 ];
 
