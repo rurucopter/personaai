@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 const PLANS = [
   {
     name: "Starter",
-    price: "9€",
+    price: "9,99€",
     period: "/mois",
     description: "Pour découvrir PersonaAI.",
     features: ["8 crédits par mois", "1 crédit = 1 vidéo de 5s", "Tous les styles"],
@@ -15,7 +15,7 @@ const PLANS = [
   },
   {
     name: "Pro",
-    price: "19€",
+    price: "19,99€",
     period: "/mois",
     description: "Pour les créateurs réguliers.",
     features: [
@@ -28,7 +28,7 @@ const PLANS = [
   },
   {
     name: "Business",
-    price: "39€",
+    price: "39,99€",
     period: "/mois",
     description: "Pour les équipes et agences.",
     features: [
