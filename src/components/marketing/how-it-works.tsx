@@ -3,8 +3,8 @@ import { Reveal } from "@/components/marketing/reveal";
 const STEPS = [
   {
     number: "01",
-    title: "Importez votre vidéo",
-    description: "MP4, MOV ou WEBM. Prévisualisez avant de continuer.",
+    title: "Écrivez votre histoire",
+    description: "Une scène, des dialogues entre guillemets — comme vous voulez.",
   },
   {
     number: "02",
@@ -13,11 +13,6 @@ const STEPS = [
   },
   {
     number: "03",
-    title: "Personnalisez",
-    description: "Tenue, coiffure, lumière, énergie, caméra, qualité.",
-  },
-  {
-    number: "04",
     title: "Générez",
     description: "Suivez la progression en direct, recevez votre vidéo.",
   },

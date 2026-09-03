@@ -28,7 +28,7 @@ export function FinalCTA() {
           render={<Link href="/signup" />}
           nativeButton={false}
         >
-          Créer mon premier persona
+          Créer ma première vidéo
           <ArrowRight className="size-4" />
         </Button>
       </Reveal>

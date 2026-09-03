@@ -10,16 +10,16 @@ const FAQS = [
   {
     question: "Est-ce que PersonaAI peut usurper l'identité de quelqu'un d'autre ?",
     answer:
-      "Non. Chaque transformation ne s'applique qu'à la vidéo que vous importez vous-même. PersonaAI ne permet pas de transformer la vidéo d'une autre personne.",
+      "Non. Les vidéos sont entièrement générées à partir de votre texte — aucune vidéo ou photo d'une vraie personne n'est utilisée.",
   },
   {
-    question: "Quels formats de vidéo sont acceptés ?",
-    answer: "MP4, MOV et WEBM, jusqu'à 200 Mo par fichier.",
+    question: "Quelle est la durée des vidéos générées ?",
+    answer: "5 ou 10 secondes, au choix, avec dialogues audio générés automatiquement.",
   },
   {
     question: "Comment fonctionnent les crédits ?",
     answer:
-      "Chaque génération consomme des crédits selon la qualité choisie. Votre abonnement inclut un crédit mensuel, rechargeable à tout moment.",
+      "Chaque génération consomme des crédits selon la durée choisie. Votre abonnement inclut un crédit mensuel, rechargeable à tout moment.",
   },
   {
     question: "Puis-je annuler à tout moment ?",
@@ -29,7 +29,7 @@ const FAQS = [
   {
     question: "Quels fournisseurs d'IA sont utilisés ?",
     answer:
-      "PersonaAI s'appuie sur des modèles vidéo IA de pointe (Fal.ai, Replicate, Runway, Luma) sélectionnés pour leur réalisme.",
+      "PersonaAI s'appuie sur Kling, un modèle vidéo IA de pointe, sélectionné pour son réalisme et sa gestion native de l'audio.",
   },
 ];
 

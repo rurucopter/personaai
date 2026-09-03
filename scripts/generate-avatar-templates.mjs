@@ -36,26 +36,28 @@ const ORDINARY_PERSON_SUFFIX =
   "This is an ordinary, average-looking real person, not a model or influencer — plain, unremarkable, everyday features. Candid unretouched phone snapshot, bad indoor lighting is fine, slightly imperfect framing. Real skin texture with visible pores, blemishes, uneven tone, redness, or blotchiness. Natural facial asymmetry, imperfect teeth alignment, tired or plain expression is fine — do not make this person look conventionally attractive, glamorous, or like a professional model. Avoid symmetry, smoothness, or any polished/synthetic AI look.";
 
 // For original, non-photorealistic "character" avatars (e.g. the talking
-// fruit trend) — explicitly steers toward a generic, original design so we
-// never reproduce an existing copyrighted/trademarked character.
-const CARTOON_FRUIT_SUFFIX =
-  "Simple flat vector illustration style, bold clean outlines, bright saturated colors, plain solid-color background, no text, no watermark, no logos. Completely original character design, not based on any existing movie, show, game, or franchise character.";
+// fruit trend) — humanoid body with a stylized fruit-shaped head, in the
+// vein of the popular "fruit people" AI-video genre. Explicitly steers
+// toward a generic, original design so we never reproduce an existing
+// copyrighted/trademarked character or a specific creator's series.
+const FRUIT_PERSON_SUFFIX =
+  "Full human body with normal proportions and casual modest summer clothing (t-shirt or sundress, shorts), only the head is fruit-shaped. Polished 3D animated movie render, Pixar/Disney-style character design, warm cinematic lighting, tropical beach background at golden hour. Completely original character design, not based on any existing movie, show, game, franchise, or online creator's series.";
 
 const TEMPLATES = [
   {
     id: "talking-banana",
     prompt:
-      `An original cute cartoon character shaped like a whole banana, with big round googly eyes and a wide cheerful open-mouth smile, simple thin stick arms, bright yellow peel. ${CARTOON_FRUIT_SUFFIX}`,
+      `An original 3D animated humanoid character with a stylized banana-shaped head (friendly cartoon face, big expressive eyes, warm smile) atop a normal human body, bright yellow head color. ${FRUIT_PERSON_SUFFIX}`,
   },
   {
     id: "talking-strawberry",
     prompt:
-      `An original cute cartoon character shaped like a strawberry, with big round googly eyes and a playful smile, a small green leaf tuft on top, bright red skin with small seed dots. ${CARTOON_FRUIT_SUFFIX}`,
+      `An original 3D animated humanoid character with a stylized strawberry-shaped head (friendly cartoon face, big expressive eyes, warm smile, small green leaf tuft on top) atop a normal human body, bright red head color with small seed dots. ${FRUIT_PERSON_SUFFIX}`,
   },
   {
     id: "talking-watermelon",
     prompt:
-      `An original cute cartoon character shaped like a triangular watermelon slice, with big round googly eyes and a wide happy smile, bright pink flesh, green rind edge, small black seeds. ${CARTOON_FRUIT_SUFFIX}`,
+      `An original 3D animated humanoid character with a stylized watermelon-shaped head (friendly cartoon face, big expressive eyes, wide happy smile) atop a normal human body, bright pink and green head color with small black seeds. ${FRUIT_PERSON_SUFFIX}`,
   },
   {
     id: "blonde-lifestyle",

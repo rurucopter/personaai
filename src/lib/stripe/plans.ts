@@ -6,17 +6,17 @@ export const PLAN_CONFIG: Record<
 > = {
   starter: {
     label: "Starter",
-    monthlyCredits: 20,
+    monthlyCredits: 8,
     priceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_STARTER,
   },
   pro: {
     label: "Pro",
-    monthlyCredits: 80,
+    monthlyCredits: 18,
     priceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_PRO,
   },
   business: {
     label: "Business",
-    monthlyCredits: 250,
+    monthlyCredits: 40,
     priceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_BUSINESS,
   },
 };
