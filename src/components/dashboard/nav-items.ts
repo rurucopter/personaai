@@ -5,7 +5,6 @@ import {
   Home,
   Settings,
   Sparkles,
-  UserRound,
   Video,
   type LucideIcon,
 } from "lucide-react";
@@ -20,7 +19,6 @@ export interface NavItem {
 export const NAV_ITEMS: NavItem[] = [
   { href: "/dashboard", label: "Accueil", icon: Home },
   { href: "/dashboard/create", label: "Créer une transformation", icon: Sparkles },
-  { href: "/dashboard/character", label: "Personnage IA", icon: UserRound },
   { href: "/dashboard/videos", label: "Mes vidéos", icon: Video },
   { href: "/dashboard/history", label: "Historique", icon: Clock },
   { href: "/dashboard/favorites", label: "Favoris", icon: Heart },

@@ -30,27 +30,3 @@ export async function failVideoAndRefund(
   }
   return updated;
 }
-
-/** Same guarded fail+refund as {@link failVideoAndRefund}, for character images. */
-export async function failCharacterImageAndRefund(
-  service: SupabaseClient,
-  image: { id: string; user_id: string; credits_spent: number },
-  errorMessage: string
-) {
-  const { data: transitioned } = await service
-    .from("character_images")
-    .update({ status: "failed", error_message: errorMessage })
-    .eq("id", image.id)
-    .in("status", ["queued", "processing"])
-    .select();
-
-  const updated = transitioned?.[0] ?? null;
-  if (updated && image.credits_spent > 0) {
-    await service.rpc("refund_credits", {
-      p_user_id: image.user_id,
-      p_amount: image.credits_spent,
-      p_video_id: null,
-    });
-  }
-  return updated;
-}

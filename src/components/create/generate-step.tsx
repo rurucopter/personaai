@@ -6,7 +6,6 @@ import { Badge } from "@/components/ui/badge";
 import { getPersonaById } from "@/lib/personas";
 import { getAvatarTemplateById } from "@/lib/avatar-templates";
 import type { TransformationSettings } from "@/types/ai-provider";
-import type { CharacterRow } from "@/types/database";
 
 interface GenerateStepProps {
   personaId: string;
@@ -16,7 +15,6 @@ interface GenerateStepProps {
   submitting: boolean;
   error: string | null;
   onGenerate: () => void;
-  characters: CharacterRow[];
 }
 
 export function GenerateStep({
@@ -27,17 +25,12 @@ export function GenerateStep({
   submitting,
   error,
   onGenerate,
-  characters,
 }: GenerateStepProps) {
-  const character = personaId.startsWith("character:")
-    ? characters.find((c) => `character:${c.id}` === personaId)
-    : undefined;
   const template = personaId.startsWith("template:")
     ? getAvatarTemplateById(personaId.slice("template:".length))
     : undefined;
-  const isCustomPhoto = personaId.startsWith("photo:");
-  const persona = character || template || isCustomPhoto ? undefined : getPersonaById(personaId);
-  const label = character?.name ?? template?.name ?? (isCustomPhoto ? "Photo importée" : persona?.label);
+  const persona = template ? undefined : getPersonaById(personaId);
+  const label = template?.name ?? persona?.label;
   const insufficientCredits = creditBalance < cost;
 
   return (

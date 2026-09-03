@@ -11,11 +11,9 @@ import { buildWebhookUrl } from "@/lib/webhooks";
 import { failVideoAndRefund } from "@/lib/generation-finalize";
 import { getAvatarTemplateById } from "@/lib/avatar-templates";
 import type { GenerationJobInput, TransformationSettings } from "@/types/ai-provider";
-import type { CharacterRow, VideoRow } from "@/types/database";
+import type { VideoRow } from "@/types/database";
 
-const CHARACTER_PREFIX = "character:";
 const TEMPLATE_PREFIX = "template:";
-const PHOTO_PREFIX = "photo:";
 
 interface BecomeTarget {
   imageUrl: string;
@@ -71,31 +69,9 @@ export async function POST(
   if (!canSpend) return NextResponse.json({ error: "Crédits insuffisants." }, { status: 402 });
 
   let becomeTarget: BecomeTarget | null = null;
-  if (settings.persona.startsWith(CHARACTER_PREFIX)) {
-    const characterId = settings.persona.slice(CHARACTER_PREFIX.length);
-    const { data } = await supabase
-      .from("ai_characters")
-      .select("*")
-      .eq("id", characterId)
-      .eq("user_id", user.id)
-      .single<CharacterRow>();
-    if (data?.reference_image_url) {
-      becomeTarget = { imageUrl: data.reference_image_url, description: data.description };
-    }
-  } else if (settings.persona.startsWith(TEMPLATE_PREFIX)) {
+  if (settings.persona.startsWith(TEMPLATE_PREFIX)) {
     const template = getAvatarTemplateById(settings.persona.slice(TEMPLATE_PREFIX.length));
     if (template) becomeTarget = { imageUrl: template.imageUrl, description: template.description };
-  } else if (settings.persona.startsWith(PHOTO_PREFIX)) {
-    const photoPath = settings.persona.slice(PHOTO_PREFIX.length);
-    const { data: signedPhoto } = await supabase.storage
-      .from("video-frames")
-      .createSignedUrl(photoPath, 60 * 60);
-    if (signedPhoto?.signedUrl) {
-      becomeTarget = {
-        imageUrl: signedPhoto.signedUrl,
-        description: "the exact person shown in the reference photo",
-      };
-    }
   }
 
   const { data: video, error: insertError } = await supabase

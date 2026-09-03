@@ -12,7 +12,7 @@ import { GenerationProgress } from "@/components/create/generation-progress";
 import { Button } from "@/components/ui/button";
 import { computeGenerationCost } from "@/lib/credit-costs";
 import type { TransformationSettings } from "@/types/ai-provider";
-import type { CharacterRow, VideoRow } from "@/types/database";
+import type { VideoRow } from "@/types/database";
 
 const DEFAULT_SETTINGS: Omit<TransformationSettings, "persona"> = {
   quality: "standard",
@@ -22,10 +22,9 @@ const DEFAULT_SETTINGS: Omit<TransformationSettings, "persona"> = {
 
 interface CreationWizardProps {
   creditBalance: number;
-  characters: CharacterRow[];
 }
 
-export function CreationWizard({ creditBalance, characters }: CreationWizardProps) {
+export function CreationWizard({ creditBalance }: CreationWizardProps) {
   const [step, setStep] = useState(1);
   const [sourceVideoPath, setSourceVideoPath] = useState<string | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -144,7 +143,6 @@ export function CreationWizard({ creditBalance, characters }: CreationWizardProp
               submitting={submitting}
               error={error}
               onGenerate={handleGenerate}
-              characters={characters}
             />
           )}
         </motion.div>

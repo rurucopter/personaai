@@ -13,16 +13,11 @@ import { failVideoAndRefund } from "@/lib/generation-finalize";
 import { readJson } from "@/lib/http";
 import { getAvatarTemplateById } from "@/lib/avatar-templates";
 import type { GenerationJobInput, TransformationSettings } from "@/types/ai-provider";
-import type { CharacterRow } from "@/types/database";
 
-const CHARACTER_PREFIX = "character:";
 const TEMPLATE_PREFIX = "template:";
-const PHOTO_PREFIX = "photo:";
 
-// Both AI characters and ready-made avatar templates drive "become" mode:
-// the video's person is replaced by this target face. Unifying them here lets
-// a user apply any of the 21 avatars directly in the create flow, without
-// first turning each into a saved character.
+// A ready-made avatar template drives "become" mode: the video's person is
+// replaced by this target face.
 interface BecomeTarget {
   imageUrl: string;
   description: string;
@@ -54,41 +49,12 @@ export async function POST(request: Request) {
   }
   let becomeTarget: BecomeTarget | null = null;
 
-  if (body.personaId.startsWith(CHARACTER_PREFIX)) {
-    const characterId = body.personaId.slice(CHARACTER_PREFIX.length);
-    const { data } = await supabase
-      .from("ai_characters")
-      .select("*")
-      .eq("id", characterId)
-      .eq("user_id", user.id)
-      .single<CharacterRow>();
-
-    if (!data || !data.reference_image_url) {
-      return NextResponse.json({ error: "Personnage introuvable." }, { status: 400 });
-    }
-    becomeTarget = { imageUrl: data.reference_image_url, description: data.description };
-  } else if (body.personaId.startsWith(TEMPLATE_PREFIX)) {
+  if (body.personaId.startsWith(TEMPLATE_PREFIX)) {
     const template = getAvatarTemplateById(body.personaId.slice(TEMPLATE_PREFIX.length));
     if (!template) {
       return NextResponse.json({ error: "Avatar introuvable." }, { status: 400 });
     }
     becomeTarget = { imageUrl: template.imageUrl, description: template.description };
-  } else if (body.personaId.startsWith(PHOTO_PREFIX)) {
-    const photoPath = body.personaId.slice(PHOTO_PREFIX.length);
-    const { data: signedPhoto } = await supabase.storage
-      .from("video-frames")
-      .createSignedUrl(photoPath, 60 * 60);
-
-    if (!signedPhoto?.signedUrl) {
-      return NextResponse.json({ error: "Photo introuvable." }, { status: 400 });
-    }
-    // No text description for a freely-uploaded photo — the identity lock
-    // comes from the reference image itself (provider "become" mechanism),
-    // this text just needs to point at it without contradicting that.
-    becomeTarget = {
-      imageUrl: signedPhoto.signedUrl,
-      description: "the exact person shown in the reference photo",
-    };
   } else if (!getPersonaById(body.personaId)) {
     return NextResponse.json({ error: "Persona inconnu." }, { status: 400 });
   }
