@@ -9,6 +9,9 @@ export function ThemeToggle() {
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
+  // next-themes' documented hydration-safe pattern: defer theme-dependent
+  // rendering until after mount so server/client markup matches.
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => setMounted(true), []);
 
   if (!mounted) return <div className="size-9" />;

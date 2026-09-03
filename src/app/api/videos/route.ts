@@ -88,6 +88,11 @@ export async function POST(request: Request) {
     .insert({
       user_id: user.id,
       story,
+      // Reused to remember the requested output duration (5s/10s) — there's
+      // no source video anymore, so this column just tracks generation
+      // length now, which duplicate/retry needs to charge and regenerate
+      // at the same duration instead of silently defaulting to 5s.
+      source_duration_seconds: durationSeconds,
       persona: body.personaId,
       settings,
       provider: process.env.DEFAULT_AI_PROVIDER ?? "fal",

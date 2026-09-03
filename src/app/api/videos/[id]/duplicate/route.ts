@@ -58,7 +58,7 @@ export async function POST(
     return NextResponse.json({ error: "Style inconnu." }, { status: 400 });
   }
 
-  const durationSeconds: 5 | 10 = 5;
+  const durationSeconds: 5 | 10 = source.source_duration_seconds === 10 ? 10 : 5;
   const cost = computeStoryVideoCost(durationSeconds);
   const service = createServiceRoleClient();
 
@@ -80,6 +80,7 @@ export async function POST(
       user_id: user.id,
       project_id: source.project_id,
       story: source.story,
+      source_duration_seconds: durationSeconds,
       persona: source.persona,
       settings,
       provider: source.provider,
