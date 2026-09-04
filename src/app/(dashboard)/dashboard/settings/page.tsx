@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { AvatarUpload } from "@/components/dashboard/avatar-upload";
 import { ProfileForm } from "@/components/dashboard/profile-form";
 import { PasswordForm } from "@/components/dashboard/password-form";
+import { ReferralCard } from "@/components/dashboard/referral-card";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { UserRow } from "@/types/database";
 
@@ -48,6 +49,15 @@ export default async function SettingsPage() {
         </CardHeader>
         <CardContent>
           <PasswordForm />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Parrainage</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ReferralCard referralCode={profile?.referral_code ?? ""} />
         </CardContent>
       </Card>
     </div>

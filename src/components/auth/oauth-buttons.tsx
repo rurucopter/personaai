@@ -35,15 +35,17 @@ function AppleIcon() {
   );
 }
 
-export function OAuthButtons() {
+export function OAuthButtons({ refCode }: { refCode?: string | null }) {
   const [loading, setLoading] = useState<"google" | "apple" | null>(null);
 
   async function signInWith(provider: "google" | "apple") {
     setLoading(provider);
     const supabase = createClient();
+    const redirectTo = new URL("/auth/callback", window.location.origin);
+    if (refCode) redirectTo.searchParams.set("ref", refCode);
     await supabase.auth.signInWithOAuth({
       provider,
-      options: { redirectTo: `${window.location.origin}/auth/callback` },
+      options: { redirectTo: redirectTo.toString() },
     });
   }
 

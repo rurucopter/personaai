@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import { Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { useActionState } from "react";
 import { signUpWithPassword } from "@/lib/auth/actions";
 import { OAuthButtons } from "@/components/auth/oauth-buttons";
@@ -16,8 +18,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 
-export default function SignupPage() {
+function SignupForm() {
   const [state, formAction] = useActionState(signUpWithPassword, {});
+  const searchParams = useSearchParams();
+  const ref = searchParams.get("ref");
 
   return (
     <Card>
@@ -28,7 +32,7 @@ export default function SignupPage() {
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-6">
-        <OAuthButtons />
+        <OAuthButtons refCode={ref} />
 
         <div className="flex items-center gap-3">
           <Separator className="flex-1" />
@@ -37,6 +41,7 @@ export default function SignupPage() {
         </div>
 
         <form action={formAction} className="flex flex-col gap-4">
+          {ref && <input type="hidden" name="ref" value={ref} />}
           <div className="flex flex-col gap-2">
             <Label htmlFor="fullName">Nom complet</Label>
             <Input id="fullName" name="fullName" type="text" required autoComplete="name" />
@@ -72,5 +77,13 @@ export default function SignupPage() {
         </p>
       </CardContent>
     </Card>
+  );
+}
+
+export default function SignupPage() {
+  return (
+    <Suspense fallback={null}>
+      <SignupForm />
+    </Suspense>
   );
 }

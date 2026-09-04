@@ -38,6 +38,9 @@ export interface UserRow {
   full_name: string | null;
   avatar_url: string | null;
   is_admin: boolean;
+  referral_code: string;
+  referred_by: string | null;
+  referral_reward_granted: boolean;
   created_at: string;
   updated_at: string;
 }

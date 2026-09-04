@@ -4,6 +4,11 @@ import { getStripe } from "@/lib/stripe/client";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { getPlanByPriceId, PLAN_CONFIG } from "@/lib/stripe/plans";
 
+// Well under the margin on even the cheapest plan (Starter nets ~3.80€ after
+// fal.ai cost; 3 credits cost us ~1.95€ to fulfil), so referrals stay
+// profitable regardless of which plan the referred user picks.
+const REFERRAL_REWARD_CREDITS = 3;
+
 async function grantMonthlyCredits(userId: string, amount: number) {
   const supabase = createServiceRoleClient();
   const { data: credits } = await supabase
@@ -94,6 +99,24 @@ export async function POST(request: Request) {
 
       if (plan) {
         await grantMonthlyCredits(userId, PLAN_CONFIG[plan].monthlyCredits);
+
+        // Referral reward — only on this user's first-ever paid checkout
+        // (checkout.session.completed doesn't fire again on renewals), and
+        // referral_reward_granted guards against paying it out twice if
+        // they ever cancel and resubscribe.
+        const { data: referredUser } = await supabase
+          .from("users")
+          .select("referred_by, referral_reward_granted")
+          .eq("id", userId)
+          .maybeSingle();
+
+        if (referredUser?.referred_by && !referredUser.referral_reward_granted) {
+          await grantMonthlyCredits(referredUser.referred_by, REFERRAL_REWARD_CREDITS);
+          await supabase
+            .from("users")
+            .update({ referral_reward_granted: true })
+            .eq("id", userId);
+        }
       }
       break;
     }
