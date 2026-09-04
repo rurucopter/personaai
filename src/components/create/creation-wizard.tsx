@@ -11,6 +11,8 @@ import { GenerationProgress } from "@/components/create/generation-progress";
 import { Button } from "@/components/ui/button";
 import { computeStoryVideoCost } from "@/lib/credit-costs";
 import { readPendingCreation } from "@/lib/pending-creation";
+import { dataUrlToBlob } from "@/lib/normalize-image";
+import { createClient } from "@/lib/supabase/client";
 import type { VideoRow } from "@/types/database";
 
 interface CreationWizardProps {
@@ -22,15 +24,19 @@ export function CreationWizard({ creditBalance }: CreationWizardProps) {
   const [story, setStory] = useState("");
   const [durationSeconds, setDurationSeconds] = useState<5 | 10>(5);
   const [personaId, setPersonaId] = useState<string | null>(null);
+  const [photoPath, setPhotoPath] = useState<string | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [video, setVideo] = useState<VideoRow | null>(null);
 
   const cost = computeStoryVideoCost(durationSeconds);
 
-  // Picks up the story/style a visitor already chose on the homepage before
-  // logging in, so they land straight on the review step instead of
-  // re-typing everything they just entered a moment ago.
+  // Picks up the story/style (and optional photo) a visitor already chose
+  // on the homepage before logging in, so they land straight on the review
+  // step instead of re-entering what they just typed a moment ago. The
+  // photo can only be uploaded to storage now that there's an authenticated
+  // user — it travelled here as a data URL in sessionStorage.
   useEffect(() => {
     const pending = readPendingCreation();
     if (!pending) return;
@@ -38,6 +44,29 @@ export function CreationWizard({ creditBalance }: CreationWizardProps) {
     setPersonaId(pending.personaId);
     setDurationSeconds(pending.durationSeconds);
     setStep(3);
+
+    if (pending.photoDataUrl) {
+      setPhotoPreview(pending.photoDataUrl);
+      (async () => {
+        try {
+          const supabase = createClient();
+          const {
+            data: { user },
+          } = await supabase.auth.getUser();
+          if (!user) return;
+
+          const blob = await dataUrlToBlob(pending.photoDataUrl!);
+          const path = `${user.id}/${Date.now()}-story-photo.jpg`;
+          const { error: uploadError } = await supabase.storage
+            .from("video-frames")
+            .upload(path, blob, { contentType: "image/jpeg" });
+
+          if (!uploadError) setPhotoPath(path);
+        } catch {
+          // Best-effort — generation still works without the photo.
+        }
+      })();
+    }
   }, []);
 
   const canGoNext = (step === 1 && story.trim().length > 0) || step === 2;
@@ -55,6 +84,7 @@ export function CreationWizard({ creditBalance }: CreationWizardProps) {
           story,
           personaId,
           durationSeconds,
+          photoPath,
         }),
       });
 
@@ -77,6 +107,8 @@ export function CreationWizard({ creditBalance }: CreationWizardProps) {
     setStory("");
     setDurationSeconds(5);
     setPersonaId(null);
+    setPhotoPath(null);
+    setPhotoPreview(null);
     setError(null);
   }
 
@@ -102,6 +134,15 @@ export function CreationWizard({ creditBalance }: CreationWizardProps) {
               onStoryChange={setStory}
               durationSeconds={durationSeconds}
               onDurationChange={setDurationSeconds}
+              photoPreview={photoPreview}
+              onPhotoUploaded={(path, previewUrl) => {
+                setPhotoPath(path);
+                setPhotoPreview(previewUrl);
+              }}
+              onPhotoRemoved={() => {
+                setPhotoPath(null);
+                setPhotoPreview(null);
+              }}
             />
           )}
           {step === 2 && <PersonaStep selected={personaId} onSelect={setPersonaId} />}

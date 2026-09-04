@@ -1,14 +1,15 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { ArrowRight, Loader2, Sparkles } from "lucide-react";
+import { ArrowRight, Loader2, Sparkles, Upload, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { createClient } from "@/lib/supabase/client";
 import { getAvatarTemplateById } from "@/lib/avatar-templates";
 import { PENDING_CREATION_KEY } from "@/lib/pending-creation";
+import { normalizeImageToJpeg, blobToDataUrl } from "@/lib/normalize-image";
 import { cn } from "@/lib/utils";
 
 const PIXAR_PERSONA_ID = "pixar-3d";
@@ -21,9 +22,33 @@ const fruitTemplate = getAvatarTemplateById("talking-banana");
 
 export function Hero() {
   const router = useRouter();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [story, setStory] = useState("");
   const [personaId, setPersonaId] = useState<string | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [photoError, setPhotoError] = useState<string | null>(null);
+  const [normalizingPhoto, setNormalizingPhoto] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+
+  async function handlePhotoFile(file: File) {
+    const looksLikeImage =
+      file.type.startsWith("image/") || /\.(png|jpe?g|webp|gif|bmp|heic|heif|avif)$/i.test(file.name);
+    if (!looksLikeImage) {
+      setPhotoError("Choisissez une image.");
+      return;
+    }
+
+    setPhotoError(null);
+    setNormalizingPhoto(true);
+    try {
+      const normalized = await normalizeImageToJpeg(file);
+      setPhotoPreview(await blobToDataUrl(normalized));
+    } catch {
+      setPhotoError("Ce format d'image n'est pas pris en charge.");
+    } finally {
+      setNormalizingPhoto(false);
+    }
+  }
 
   async function handleGenerate() {
     if (!story.trim() || !personaId) return;
@@ -32,7 +57,12 @@ export function Hero() {
     try {
       sessionStorage.setItem(
         PENDING_CREATION_KEY,
-        JSON.stringify({ story, personaId, durationSeconds: 5 })
+        JSON.stringify({
+          story,
+          personaId,
+          durationSeconds: 5,
+          photoDataUrl: photoPreview ?? undefined,
+        })
       );
 
       const supabase = createClient();
@@ -144,6 +174,63 @@ export function Hero() {
                 <span className="text-sm font-semibold text-white">🍌 Fruits qui parlent</span>
               </div>
             </button>
+          </div>
+
+          <div className="mt-3">
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={normalizingPhoto}
+              className={cn(
+                "flex w-full items-center gap-3 rounded-xl border-2 border-dashed p-3 text-left transition-colors disabled:pointer-events-none disabled:opacity-60",
+                photoPreview
+                  ? "border-primary bg-secondary/60"
+                  : "border-border hover:bg-secondary/30"
+              )}
+            >
+              <div className="flex size-11 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-secondary/30">
+                {photoPreview ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={photoPreview} alt="Votre photo" className="size-full object-cover" />
+                ) : normalizingPhoto ? (
+                  <Loader2 className="size-4 animate-spin text-muted-foreground" />
+                ) : (
+                  <Upload className="size-4 text-muted-foreground" />
+                )}
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-medium">
+                  {photoPreview ? "Photo ajoutée" : "Ajouter votre photo (optionnel)"}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Apparaissez dans la vidéo générée.
+                </p>
+              </div>
+              {photoPreview && (
+                <span
+                  role="button"
+                  tabIndex={0}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setPhotoPreview(null);
+                  }}
+                  className="flex size-7 shrink-0 items-center justify-center rounded-full text-muted-foreground hover:bg-muted hover:text-foreground"
+                >
+                  <X className="size-4" />
+                </span>
+              )}
+            </button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*,.heic,.heif"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) handlePhotoFile(file);
+              }}
+            />
+            {photoError && <p className="mt-1.5 text-xs text-destructive">{photoError}</p>}
           </div>
 
           <Button

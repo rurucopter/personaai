@@ -18,6 +18,8 @@ interface CreateVideoBody {
   story: string;
   personaId: string;
   durationSeconds?: 5 | 10;
+  /** Storage path of a photo the user uploaded, in the "video-frames" bucket. */
+  photoPath?: string | null;
 }
 
 function resolveStyleDescription(personaId: string): string | null {
@@ -83,6 +85,14 @@ export async function POST(request: Request) {
 
   const prompt = buildStoryPrompt(styleDescription, story);
 
+  let startImageUrl: string | undefined;
+  if (body.photoPath) {
+    const { data: signedPhoto } = await supabase.storage
+      .from("video-frames")
+      .createSignedUrl(body.photoPath, 60 * 60);
+    startImageUrl = signedPhoto?.signedUrl;
+  }
+
   const { data: video, error: insertError } = await supabase
     .from("videos")
     .insert({
@@ -125,6 +135,7 @@ export async function POST(request: Request) {
       webhookUrl: buildWebhookUrl("/api/webhooks/generation"),
       durationSeconds,
       aspectRatio: "9:16",
+      startImageUrl,
     };
 
     const handle = await provider.submitJob(jobInput);

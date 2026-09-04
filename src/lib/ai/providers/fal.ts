@@ -11,6 +11,10 @@ const SUBMIT_ENDPOINT_ID = "fal-ai/kling-video/o1/video-to-video/edit";
 // which is what makes a "talking fruit" video actually talk. Verified
 // against fal's live API docs on 2026-09-03.
 const TEXT_TO_VIDEO_ENDPOINT_ID = "fal-ai/kling-video/v2.6/pro/text-to-video";
+// Same model family, but seeded with a user's uploaded photo as the first
+// frame — used when the story flow includes a photo of themselves. Verified
+// against fal's live API docs on 2026-09-03.
+const IMAGE_TO_VIDEO_ENDPOINT_ID = "fal-ai/kling-video/v2.6/pro/image-to-video";
 // Fal's queue routes status/result/cancel under the app's base path, not the
 // full submit endpoint — confirmed against the live API on 2026-08-01
 // (GET .../kling-video/o1/video-to-video/edit/requests/{id}/status returns
@@ -50,6 +54,29 @@ export const falProvider: VideoGenerationProvider = {
   name: "fal",
 
   async submitJob(input: GenerationJobInput): Promise<GenerationJobHandle> {
+    if (!input.sourceVideoUrl && input.startImageUrl) {
+      const url = new URL(`${QUEUE_BASE}/${IMAGE_TO_VIDEO_ENDPOINT_ID}`);
+      if (input.webhookUrl) url.searchParams.set("fal_webhook", input.webhookUrl);
+
+      const res = await fetch(url.toString(), {
+        method: "POST",
+        headers: authHeaders(),
+        body: JSON.stringify({
+          prompt: input.prompt,
+          start_image_url: input.startImageUrl,
+          duration: input.durationSeconds === 10 ? "10" : "5",
+          generate_audio: true,
+        }),
+      });
+
+      if (!res.ok) {
+        throw new Error(`Fal.ai submit failed: ${res.status} ${await res.text()}`);
+      }
+
+      const data: FalQueueStatus = await res.json();
+      return { providerJobId: data.request_id, provider: "fal" };
+    }
+
     if (!input.sourceVideoUrl) {
       const url = new URL(`${QUEUE_BASE}/${TEXT_TO_VIDEO_ENDPOINT_ID}`);
       if (input.webhookUrl) url.searchParams.set("fal_webhook", input.webhookUrl);

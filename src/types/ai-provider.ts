@@ -52,6 +52,9 @@ export interface GenerationJobInput {
   durationSeconds?: 5 | 10;
   /** Text-to-video only: output frame aspect ratio. */
   aspectRatio?: "16:9" | "9:16" | "1:1";
+  /** A photo the user uploaded to appear in the generated video — switches
+   *  the story flow from pure text-to-video to image-to-video. */
+  startImageUrl?: string;
 }
 
 export interface GenerationJobHandle {

@@ -1,7 +1,8 @@
 /**
- * Lets a visitor start typing their story/style on the marketing homepage
- * before they're logged in — the choice is stashed here and picked up by
- * the create wizard right after signup/login, instead of being lost.
+ * Lets a visitor start typing their story/style (and optionally pick a
+ * photo of themselves) on the marketing homepage before they're logged
+ * in — the choice is stashed here and picked up by the create wizard
+ * right after signup/login, instead of being lost.
  */
 export const PENDING_CREATION_KEY = "personaai:pending-creation";
 
@@ -9,6 +10,9 @@ export interface PendingCreation {
   story: string;
   personaId: string;
   durationSeconds: 5 | 10;
+  /** Data URL (already normalized to JPEG) of a photo the visitor picked
+   *  before logging in — uploaded to storage once they're authenticated. */
+  photoDataUrl?: string;
 }
 
 export function readPendingCreation(): PendingCreation | null {
