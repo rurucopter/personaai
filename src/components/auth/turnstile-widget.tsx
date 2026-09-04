@@ -7,7 +7,13 @@ declare global {
     turnstile?: {
       render: (
         container: HTMLElement,
-        options: { sitekey: string; callback: (token: string) => void; "expired-callback"?: () => void }
+        options: {
+          sitekey: string;
+          callback: (token: string) => void;
+          "expired-callback"?: () => void;
+          theme?: "light" | "dark" | "auto";
+          size?: "normal" | "compact" | "flexible";
+        }
       ) => string;
       remove: (widgetId: string) => void;
     };
@@ -32,6 +38,8 @@ export function TurnstileWidget({ onVerify }: { onVerify: (token: string | null)
         sitekey: siteKey!,
         callback: (token) => onVerify(token),
         "expired-callback": () => onVerify(null),
+        theme: "dark",
+        size: "flexible",
       });
     }
 
@@ -55,5 +63,9 @@ export function TurnstileWidget({ onVerify }: { onVerify: (token: string | null)
 
   if (!process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY) return null;
 
-  return <div ref={containerRef} />;
+  return (
+    <div className="overflow-hidden rounded-lg">
+      <div ref={containerRef} />
+    </div>
+  );
 }

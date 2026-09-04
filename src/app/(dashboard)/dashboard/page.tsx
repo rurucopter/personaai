@@ -1,9 +1,10 @@
 import Link from "next/link";
-import { ArrowRight, Coins, Sparkles, Video as VideoIcon } from "lucide-react";
+import { ArrowRight, Coins, Gift, Sparkles, Video as VideoIcon } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { Button } from "@/components/ui/button";
 import { VideoCard } from "@/components/videos/video-card";
-import type { CreditsRow, SubscriptionRow, VideoRow } from "@/types/database";
+import { ReferralCard } from "@/components/dashboard/referral-card";
+import type { CreditsRow, SubscriptionRow, UserRow, VideoRow } from "@/types/database";
 
 const PLAN_LABEL: Record<string, string> = {
   starter: "Starter",
@@ -18,7 +19,7 @@ export default async function DashboardHomePage() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const [{ data: credits }, { data: subscription }, { count }, { data: recent }, { data: favorites }] =
+  const [{ data: credits }, { data: subscription }, { count }, { data: recent }, { data: favorites }, { data: profile }] =
     await Promise.all([
       supabase.from("credits").select("balance").eq("user_id", user!.id).maybeSingle<CreditsRow>(),
       supabase
@@ -38,6 +39,7 @@ export default async function DashboardHomePage() {
         .limit(3)
         .returns<VideoRow[]>(),
       supabase.from("favorites").select("video_id").eq("user_id", user!.id),
+      supabase.from("users").select("referral_code").eq("id", user!.id).maybeSingle<UserRow>(),
     ]);
 
   const favoriteIds = new Set((favorites ?? []).map((f) => f.video_id));
@@ -79,9 +81,9 @@ export default async function DashboardHomePage() {
       <div className="relative overflow-hidden rounded-2xl border border-brand/30 bg-gradient-to-br from-brand/10 to-transparent p-6 sm:p-8">
         <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
           <div>
-            <h2 className="text-lg font-semibold">Créez une nouvelle transformation</h2>
+            <h2 className="text-lg font-semibold">Créez une nouvelle vidéo</h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              Importez une vidéo et transformez-la en quelques minutes.
+              Écrivez votre histoire, choisissez un style, générez.
             </p>
           </div>
           <Button
@@ -94,6 +96,16 @@ export default async function DashboardHomePage() {
             Commencer
           </Button>
         </div>
+      </div>
+
+      <div className="relative overflow-hidden rounded-2xl border border-border bg-card p-6 sm:p-8">
+        <div className="mb-4 flex items-center gap-2">
+          <div className="flex size-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
+            <Gift className="size-4" />
+          </div>
+          <h2 className="text-lg font-semibold">Parrainez un ami, gagnez 3 crédits</h2>
+        </div>
+        <ReferralCard referralCode={profile?.referral_code ?? ""} />
       </div>
 
       {recent && recent.length > 0 && (

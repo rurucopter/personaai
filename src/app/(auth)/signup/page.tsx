@@ -5,7 +5,6 @@ import { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useActionState } from "react";
 import { signUpWithPassword } from "@/lib/auth/actions";
-import { OAuthButtons } from "@/components/auth/oauth-buttons";
 import { SubmitButton } from "@/components/auth/submit-button";
 import { TurnstileWidget } from "@/components/auth/turnstile-widget";
 import {
@@ -17,7 +16,6 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
 
 function SignupForm() {
   const [state, formAction] = useActionState(signUpWithPassword, {});
@@ -35,14 +33,6 @@ function SignupForm() {
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-6">
-        <OAuthButtons refCode={ref} />
-
-        <div className="flex items-center gap-3">
-          <Separator className="flex-1" />
-          <span className="text-xs text-muted-foreground">ou</span>
-          <Separator className="flex-1" />
-        </div>
-
         <form action={formAction} className="flex flex-col gap-4">
           {ref && <input type="hidden" name="ref" value={ref} />}
           <div className="flex flex-col gap-2">
