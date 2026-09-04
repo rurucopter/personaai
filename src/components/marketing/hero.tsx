@@ -17,6 +17,23 @@ const MAX_STORY_LENGTH = 1000;
 const EXAMPLE =
   "Une fille rentre chez elle et dit à sa mère : \"Devine quoi, j'ai eu le poste !\" Sa mère la prend dans ses bras, folle de joie.";
 
+const EXAMPLE_CHIPS = [
+  {
+    label: "🎉 Bonne nouvelle",
+    story: EXAMPLE,
+  },
+  {
+    label: "💍 Demande en mariage",
+    story:
+      "Il met un genou à terre dans un parc et demande : \"Veux-tu m'épouser ?\" Elle pleure de joie et dit oui.",
+  },
+  {
+    label: "🎓 Résultat d'examen",
+    story:
+      "Je regarde mes résultats sur mon téléphone et je hurle : \"J'ai réussi !\" en sautant partout de joie.",
+  },
+];
+
 export function Hero() {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -128,6 +145,20 @@ export function Hero() {
             placeholder={EXAMPLE}
             className="min-h-28 border-none bg-transparent p-0 text-base shadow-none focus-visible:ring-0"
           />
+
+          <div className="mt-2 flex flex-wrap gap-2">
+            <span className="text-xs text-muted-foreground">Pas d&apos;idée ?</span>
+            {EXAMPLE_CHIPS.map((chip) => (
+              <button
+                key={chip.label}
+                type="button"
+                onClick={() => setStory(chip.story)}
+                className="rounded-full border border-border bg-muted/40 px-3 py-1 text-xs text-muted-foreground transition-colors hover:border-primary/50 hover:text-foreground"
+              >
+                {chip.label}
+              </button>
+            ))}
+          </div>
 
           <div className="mt-4 grid grid-cols-2 gap-3">
             <button
@@ -252,6 +283,7 @@ export function Hero() {
         <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-muted-foreground">
           <span>3 crédits offerts à l&apos;inscription</span>
           <span>Aucune carte requise</span>
+          <span>Vos vidéos restent privées</span>
         </div>
       </div>
     </section>

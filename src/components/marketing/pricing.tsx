@@ -1,8 +1,14 @@
 import Link from "next/link";
-import { Check } from "lucide-react";
+import { Check, Lock, RefreshCw, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Reveal } from "@/components/marketing/reveal";
 import { cn } from "@/lib/utils";
+
+const TRUST_POINTS = [
+  { icon: Lock, label: "Paiement sécurisé par Stripe" },
+  { icon: RefreshCw, label: "Annulable à tout moment" },
+  { icon: ShieldCheck, label: "Sans engagement" },
+];
 
 const PLANS = [
   {
@@ -108,6 +114,18 @@ export function Pricing() {
           </Reveal>
         ))}
       </div>
+
+      <Reveal
+        delay={0.2}
+        className="mt-10 flex flex-wrap items-center justify-center gap-x-8 gap-y-3 text-sm text-muted-foreground"
+      >
+        {TRUST_POINTS.map((point) => (
+          <span key={point.label} className="flex items-center gap-2">
+            <point.icon className="size-4 text-brand" />
+            {point.label}
+          </span>
+        ))}
+      </Reveal>
     </section>
   );
 }
