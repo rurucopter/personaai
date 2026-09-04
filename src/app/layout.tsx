@@ -18,25 +18,25 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"),
   title: {
-    default: "PersonaAI — Transformez-vous en n'importe quel personnage",
+    default: "PersonaAI — Une histoire, un style, une vidéo générée par IA",
     template: "%s · PersonaAI",
   },
   description:
-    "Importez une vidéo de vous-même et transformez votre apparence, votre style et votre énergie grâce à l'IA, tout en conservant votre identité.",
+    "Écrivez votre histoire, choisissez un style (3D Pixar ou fruit qui parle), et l'IA génère la vidéo entière — avec voix et dialogues. 3 crédits offerts, aucune carte requise.",
   openGraph: {
     type: "website",
     locale: "fr_FR",
     siteName: "PersonaAI",
-    title: "PersonaAI — Transformez-vous en n'importe quel personnage",
+    title: "PersonaAI — Une histoire, un style, une vidéo générée par IA",
     description:
-      "Importez une vidéo de vous-même et transformez votre style et votre univers grâce à l'IA, tout en conservant votre identité.",
+      "Écrivez votre histoire, choisissez un style (3D Pixar ou fruit qui parle), et l'IA génère la vidéo entière — avec voix et dialogues.",
     url: "/",
   },
   twitter: {
     card: "summary_large_image",
-    title: "PersonaAI — Transformez-vous en n'importe quel personnage",
+    title: "PersonaAI — Une histoire, un style, une vidéo générée par IA",
     description:
-      "Importez une vidéo de vous-même et transformez votre style et votre univers grâce à l'IA.",
+      "Écrivez votre histoire, choisissez un style, et l'IA génère la vidéo entière — avec voix et dialogues.",
   },
 };
 

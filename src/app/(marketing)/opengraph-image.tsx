@@ -26,7 +26,7 @@ export default function OpengraphImage() {
           style={{
             display: "flex",
             marginTop: 24,
-            fontSize: 60,
+            fontSize: 64,
             fontWeight: 800,
             textTransform: "uppercase",
             letterSpacing: -1,
@@ -34,7 +34,17 @@ export default function OpengraphImage() {
             maxWidth: 950,
           }}
         >
-          Importez-vous. Transformez-vous. Devenez-le.
+          Une histoire. Un style. Une vidéo.
+        </div>
+        <div
+          style={{
+            display: "flex",
+            marginTop: 32,
+            fontSize: 30,
+            color: "#c4b8d8",
+          }}
+        >
+          🎬 Style 3D Pixar   •   🍌 Fruits qui parlent
         </div>
       </div>
     ),

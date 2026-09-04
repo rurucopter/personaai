@@ -7,7 +7,6 @@ import { ArrowRight, Loader2, Sparkles, Upload, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { createClient } from "@/lib/supabase/client";
-import { getAvatarTemplateById } from "@/lib/avatar-templates";
 import { PENDING_CREATION_KEY } from "@/lib/pending-creation";
 import { normalizeImageToJpeg, blobToDataUrl } from "@/lib/normalize-image";
 import { cn } from "@/lib/utils";
@@ -17,8 +16,6 @@ const FRUIT_PERSONA_ID = "template:talking-banana";
 const MAX_STORY_LENGTH = 1000;
 const EXAMPLE =
   "Une fille rentre chez elle et dit à sa mère : \"Devine quoi, j'ai eu le poste !\" Sa mère la prend dans ses bras, folle de joie.";
-
-const fruitTemplate = getAvatarTemplateById("talking-banana");
 
 export function Hero() {
   const router = useRouter();
@@ -143,10 +140,12 @@ export function Hero() {
                   : "border-border hover:border-primary/50"
               )}
             >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src="/marketing/pixar-hero.jpg"
-                alt="Style 3D Pixar"
+              <video
+                src="/marketing/example-pixar.mp4"
+                autoPlay
+                loop
+                muted
+                playsInline
                 className="aspect-square w-full object-cover"
               />
               <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-2.5">
@@ -164,10 +163,12 @@ export function Hero() {
                   : "border-border hover:border-primary/50"
               )}
             >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={fruitTemplate?.imageUrl}
-                alt="Fruits qui parlent"
+              <video
+                src="/marketing/example-fruit.mp4"
+                autoPlay
+                loop
+                muted
+                playsInline
                 className="aspect-square w-full object-cover"
               />
               <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-2.5">
