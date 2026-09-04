@@ -31,6 +31,7 @@ export async function signUpWithPassword(
   const password = String(formData.get("password") ?? "");
   const fullName = String(formData.get("fullName") ?? "");
   const referredByCode = formData.get("ref");
+  const captchaToken = formData.get("captchaToken");
 
   const supabase = await createClient();
   const { error } = await supabase.auth.signUp({
@@ -42,6 +43,7 @@ export async function signUpWithPassword(
         ...(referredByCode ? { referred_by_code: String(referredByCode) } : {}),
       },
       emailRedirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback`,
+      ...(captchaToken ? { captchaToken: String(captchaToken) } : {}),
     },
   });
 

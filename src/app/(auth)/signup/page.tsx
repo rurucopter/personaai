@@ -1,12 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { Suspense } from "react";
+import { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useActionState } from "react";
 import { signUpWithPassword } from "@/lib/auth/actions";
 import { OAuthButtons } from "@/components/auth/oauth-buttons";
 import { SubmitButton } from "@/components/auth/submit-button";
+import { TurnstileWidget } from "@/components/auth/turnstile-widget";
 import {
   Card,
   CardContent,
@@ -22,6 +23,8 @@ function SignupForm() {
   const [state, formAction] = useActionState(signUpWithPassword, {});
   const searchParams = useSearchParams();
   const ref = searchParams.get("ref");
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const captchaRequired = Boolean(process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY);
 
   return (
     <Card>
@@ -62,11 +65,16 @@ function SignupForm() {
             />
           </div>
 
+          <input type="hidden" name="captchaToken" value={captchaToken ?? ""} />
+          <TurnstileWidget onVerify={setCaptchaToken} />
+
           {state?.error && (
             <p className="text-sm text-destructive">{state.error}</p>
           )}
 
-          <SubmitButton>Créer mon compte</SubmitButton>
+          <SubmitButton disabled={captchaRequired && !captchaToken}>
+            Créer mon compte
+          </SubmitButton>
         </form>
 
         <p className="text-center text-sm text-muted-foreground">
