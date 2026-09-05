@@ -12,21 +12,21 @@ export const AVATAR_TEMPLATES: AvatarTemplate[] = [
     id: "talking-banana",
     name: "Banane Rigolote",
     description:
-      "cheerful original 3D animated humanoid character with a normal human body and a stylized bright yellow banana-shaped head with big expressive eyes and a warm smile, tropical beach setting",
+      "elegant original 3D animated humanoid character wearing a stylish satin dress, with a stylized bright yellow banana-shaped head, big expressive eyes with lashes, and a warm smile, cozy indoor home setting",
     imageUrl: `${SUPABASE_URL}/storage/v1/object/public/avatar-templates/talking-banana.jpg`,
   },
   {
     id: "talking-strawberry",
     name: "Fraise Complice",
     description:
-      "cheerful original 3D animated humanoid character with a normal human body and a stylized bright red strawberry-shaped head with big expressive eyes and a warm smile, tropical beach setting",
+      "elegant original 3D animated humanoid character wearing a stylish satin dress, with a stylized bright red strawberry-shaped head, big expressive eyes with lashes, and a warm smile, cozy indoor home setting",
     imageUrl: `${SUPABASE_URL}/storage/v1/object/public/avatar-templates/talking-strawberry.jpg`,
   },
   {
     id: "talking-watermelon",
     name: "Pastèque Complice",
     description:
-      "cheerful original 3D animated humanoid character with a normal human body and a stylized pink-and-green watermelon-shaped head with big expressive eyes and a warm smile, tropical beach setting",
+      "elegant original 3D animated humanoid character wearing a stylish satin dress, with a stylized pink-and-green watermelon-shaped head, big expressive eyes with lashes, and a warm smile, cozy indoor home setting",
     imageUrl: `${SUPABASE_URL}/storage/v1/object/public/avatar-templates/talking-watermelon.jpg`,
   },
 ];

@@ -41,23 +41,23 @@ const ORDINARY_PERSON_SUFFIX =
 // toward a generic, original design so we never reproduce an existing
 // copyrighted/trademarked character or a specific creator's series.
 const FRUIT_PERSON_SUFFIX =
-  "Full human body with normal proportions and casual modest summer clothing (t-shirt or sundress, shorts), only the head is fruit-shaped. Polished 3D animated movie render, Pixar/Disney-style character design, warm cinematic lighting, tropical beach background at golden hour. Completely original character design, not based on any existing movie, show, game, franchise, or online creator's series.";
+  "Full human body with elegant, graceful proportions, wearing a stylish, modest satin dress. Cozy warm indoor home setting with soft golden lighting. Polished 3D animated movie render, Pixar/Disney-style character design, glamorous but wholesome. Completely original character design, not based on any existing movie, show, game, franchise, or online creator's series.";
 
 const TEMPLATES = [
   {
     id: "talking-banana",
     prompt:
-      `An original 3D animated humanoid character with a stylized banana-shaped head (friendly cartoon face, big expressive eyes, warm smile) atop a normal human body, bright yellow head color. ${FRUIT_PERSON_SUFFIX}`,
+      `An original 3D animated humanoid character with a stylized banana-shaped head (elegant cartoon face, big expressive eyes with lashes, warm smile) atop a normal human body, bright yellow head color. ${FRUIT_PERSON_SUFFIX}`,
   },
   {
     id: "talking-strawberry",
     prompt:
-      `An original 3D animated humanoid character with a stylized strawberry-shaped head (friendly cartoon face, big expressive eyes, warm smile, small green leaf tuft on top) atop a normal human body, bright red head color with small seed dots. ${FRUIT_PERSON_SUFFIX}`,
+      `An original 3D animated humanoid character with a stylized strawberry-shaped head (elegant cartoon face, big expressive eyes with lashes, warm smile, small green leaf tuft on top) atop a normal human body, bright red head color with small seed dots. ${FRUIT_PERSON_SUFFIX}`,
   },
   {
     id: "talking-watermelon",
     prompt:
-      `An original 3D animated humanoid character with a stylized watermelon-shaped head (friendly cartoon face, big expressive eyes, wide happy smile) atop a normal human body, bright pink and green head color with small black seeds. ${FRUIT_PERSON_SUFFIX}`,
+      `An original 3D animated humanoid character with a stylized watermelon-shaped head (elegant cartoon face, big expressive eyes with lashes, wide happy smile) atop a normal human body, bright pink and green head color with small black seeds. ${FRUIT_PERSON_SUFFIX}`,
   },
   {
     id: "blonde-lifestyle",

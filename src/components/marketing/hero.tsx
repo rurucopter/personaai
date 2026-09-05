@@ -281,8 +281,8 @@ export function Hero() {
         </motion.div>
 
         <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-muted-foreground">
-          <span>3 crédits offerts à l&apos;inscription</span>
-          <span>Aucune carte requise</span>
+          <span>Dès 9,99€/mois</span>
+          <span>Sans engagement</span>
           <span>Vos vidéos restent privées</span>
         </div>
       </div>

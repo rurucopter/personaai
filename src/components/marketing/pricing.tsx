@@ -64,7 +64,7 @@ export function Pricing() {
         </span>
         <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">Simple et transparent</h2>
         <p className="text-muted-foreground">
-          Commencez gratuitement avec 3 crédits offerts, évoluez à votre rythme.
+          Choisissez un plan et générez vos vidéos dès aujourd&apos;hui.
         </p>
       </Reveal>
 
