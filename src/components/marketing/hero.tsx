@@ -114,13 +114,13 @@ export function Hero() {
           transition={{ duration: 0.5, delay: 0.05 }}
           className="text-4xl leading-[1.05] font-black tracking-tight uppercase sm:text-6xl"
         >
-          Une histoire.
+          Générez vos premiers
           <br />
           <span className="bg-gradient-to-r from-brand to-brand-2 bg-clip-text text-transparent">
-            Un style.
+            revenus
           </span>
           <br />
-          Une vidéo.
+          grâce à ces vidéos.
         </motion.h1>
 
         <motion.p
