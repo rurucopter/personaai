@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { createClient } from "@/lib/supabase/client";
 import { PENDING_CREATION_KEY } from "@/lib/pending-creation";
 import { normalizeImageToJpeg, blobToDataUrl } from "@/lib/normalize-image";
+import { FloatingDollars } from "@/components/marketing/floating-dollars";
 import { cn } from "@/lib/utils";
 
 const PIXAR_PERSONA_ID = "pixar-3d";
@@ -96,6 +97,7 @@ export function Hero() {
         aria-hidden
         className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[700px] bg-[radial-gradient(ellipse_60%_50%_at_50%_0%,color-mix(in_oklch,var(--brand),transparent_82%),transparent)]"
       />
+      <FloatingDollars />
 
       <div className="mx-auto flex max-w-3xl flex-col items-center gap-6 px-6 pt-20 pb-24 text-center">
         <motion.div
