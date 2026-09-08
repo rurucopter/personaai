@@ -3,7 +3,14 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { BarChart3, CreditCard, LayoutDashboard, Users, type LucideIcon } from "lucide-react";
+import {
+  BarChart3,
+  CreditCard,
+  LayoutDashboard,
+  LineChart,
+  Users,
+  type LucideIcon,
+} from "lucide-react";
 
 export interface AdminNavItem {
   href: string;
@@ -13,6 +20,7 @@ export interface AdminNavItem {
 
 export const ADMIN_NAV_ITEMS: AdminNavItem[] = [
   { href: "/admin", label: "Statistiques", icon: BarChart3 },
+  { href: "/admin/analytics", label: "Analytics", icon: LineChart },
   { href: "/admin/users", label: "Utilisateurs", icon: Users },
   { href: "/admin/subscriptions", label: "Abonnements", icon: CreditCard },
 ];
