@@ -41,7 +41,7 @@ const ORDINARY_PERSON_SUFFIX =
 // toward a generic, original design so we never reproduce an existing
 // copyrighted/trademarked character or a specific creator's series.
 const FRUIT_PERSON_SUFFIX =
-  "Full human body with elegant, graceful proportions, wearing a stylish, modest satin dress. Cozy warm indoor home setting with soft golden lighting. Polished 3D animated movie render, Pixar/Disney-style character design, glamorous but wholesome. Completely original character design, not based on any existing movie, show, game, franchise, or online creator's series.";
+  "Full human body with elegant, graceful proportions, wearing tasteful, modest tropical summer resort wear. Tropical beach setting at golden hour, palm trees, warm sunset lighting. Polished 3D animated movie render, Pixar/Disney-style character design, wholesome. Completely original character design, not based on any existing movie, show, game, franchise, or online creator's series.";
 
 const TEMPLATES = [
   {

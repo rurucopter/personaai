@@ -117,6 +117,7 @@ export function buildStoryPrompt(styleDescription: string, story: string): strin
     `${styleDescription}.`,
     story.trim(),
     "High-quality, coherent scene with fluid natural motion and clear, well-paced dialogue delivery.",
+    "Cinematic quality, sharp focus, richly detailed textures and lighting, professional animated-film cinematography — not blurry, not distorted, not low quality.",
   ]
     .filter(Boolean)
     .join(" ");
