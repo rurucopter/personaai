@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { ArrowRight, Loader2, Sparkles, Upload, X } from "lucide-react";
+import { ArrowRight, Eye, Loader2, Play, Sparkles, Upload, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { createClient } from "@/lib/supabase/client";
@@ -33,6 +33,13 @@ const EXAMPLE_CHIPS = [
     story:
       "Je regarde mes résultats sur mon téléphone et je hurle : \"J'ai réussi !\" en sautant partout de joie.",
   },
+];
+
+const SHOWCASE_VIDEOS = [
+  { src: "/marketing/hero-fruit.jpg", views: "1.2M", label: "Fruits au chantier" },
+  { src: "/marketing/example-pixar.mp4", views: "847K", label: "Demande en mariage 3D", isVideo: true },
+  { src: "/marketing/hero-fruit-wide.jpg", views: "2.1M", label: "La pause déjeuner" },
+  { src: "/marketing/pixar-hero.jpg", views: "634K", label: "Résultat du bac" },
 ];
 
 export function Hero() {
@@ -135,10 +142,58 @@ export function Hero() {
           générer la vidéo entière.
         </motion.p>
 
+        {/* Showcase — viral video gallery with view counts */}
+        <motion.div
+          initial={{ opacity: 0, y: 14 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.12 }}
+          className="mt-2 flex w-full gap-3 overflow-x-auto pb-2 sm:justify-center [&::-webkit-scrollbar]:hidden"
+        >
+          {SHOWCASE_VIDEOS.map((v) => (
+            <div
+              key={v.src}
+              className="relative shrink-0 w-[140px] sm:w-[160px] overflow-hidden rounded-xl border border-border shadow-md"
+            >
+              {v.isVideo ? (
+                <video
+                  src={v.src}
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
+                  className="aspect-[9/16] w-full object-cover"
+                />
+              ) : (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={v.src}
+                  alt={v.label}
+                  className="aspect-[9/16] w-full object-cover"
+                />
+              )}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+              <div className="absolute inset-x-0 bottom-0 flex items-end justify-between p-2">
+                <span className="text-[10px] font-medium leading-tight text-white/90 max-w-[60%]">
+                  {v.label}
+                </span>
+                <span className="flex items-center gap-0.5 text-[10px] font-semibold text-white">
+                  <Eye className="size-3" />
+                  {v.views}
+                </span>
+              </div>
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="flex size-8 items-center justify-center rounded-full bg-white/20 backdrop-blur-sm">
+                  <Play className="size-3.5 fill-white text-white" />
+                </div>
+              </div>
+            </div>
+          ))}
+        </motion.div>
+
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.15 }}
+          transition={{ duration: 0.5, delay: 0.18 }}
           className="mt-4 w-full rounded-2xl border border-border bg-card p-4 text-left shadow-[0_30px_90px_-30px_color-mix(in_oklch,var(--brand),transparent_40%)] sm:p-6"
         >
           <Textarea
@@ -173,12 +228,10 @@ export function Hero() {
                   : "border-border hover:border-primary/50"
               )}
             >
-              <video
-                src="/marketing/example-pixar.mp4"
-                autoPlay
-                loop
-                muted
-                playsInline
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/marketing/pixar-hero.jpg"
+                alt="Style 3D Pixar"
                 className="aspect-square w-full object-cover"
               />
               <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-2.5">
@@ -196,12 +249,10 @@ export function Hero() {
                   : "border-border hover:border-primary/50"
               )}
             >
-              <video
-                src="/marketing/example-fruit.mp4"
-                autoPlay
-                loop
-                muted
-                playsInline
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/marketing/hero-fruit.jpg"
+                alt="Fruits qui parlent"
                 className="aspect-square w-full object-cover"
               />
               <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-2.5">
