@@ -9,7 +9,7 @@ export const PENDING_CREATION_KEY = "personaai:pending-creation";
 export interface PendingCreation {
   story: string;
   personaId: string;
-  durationSeconds: 5 | 10;
+  durationSeconds: 5 | 10 | 15;
   /** Data URL (already normalized to JPEG) of a photo the visitor picked
    *  before logging in — uploaded to storage once they're authenticated. */
   photoDataUrl?: string;

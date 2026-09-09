@@ -49,7 +49,7 @@ export interface GenerationJobInput {
   sourceWidth?: number;
   sourceHeight?: number;
   /** Text-to-video only: requested clip length in seconds. */
-  durationSeconds?: 5 | 10;
+  durationSeconds?: 5 | 10 | 15;
   /** Text-to-video only: output frame aspect ratio. */
   aspectRatio?: "16:9" | "9:16" | "1:1";
   /** A photo the user uploaded to appear in the generated video — switches

@@ -14,8 +14,8 @@ const EXAMPLE =
 interface StoryStepProps {
   story: string;
   onStoryChange: (story: string) => void;
-  durationSeconds: 5 | 10;
-  onDurationChange: (duration: 5 | 10) => void;
+  durationSeconds: 5 | 10 | 15;
+  onDurationChange: (duration: 5 | 10 | 15) => void;
   photoPreview: string | null;
   onPhotoUploaded: (path: string, previewUrl: string) => void;
   onPhotoRemoved: () => void;
@@ -151,7 +151,7 @@ export function StoryStep({
       <div className="flex flex-col gap-2">
         <h3 className="text-sm font-medium text-muted-foreground">Durée</h3>
         <div className="flex gap-3">
-          {([5, 10] as const).map((seconds) => (
+          {([5, 10, 15] as const).map((seconds) => (
             <button
               key={seconds}
               type="button"

@@ -17,7 +17,7 @@ const MAX_STORY_LENGTH = 1000;
 interface CreateVideoBody {
   story: string;
   personaId: string;
-  durationSeconds?: 5 | 10;
+  durationSeconds?: 5 | 10 | 15;
   /** Storage path of a photo the user uploaded, in the "video-frames" bucket. */
   photoPath?: string | null;
 }
@@ -63,7 +63,8 @@ export async function POST(request: Request) {
     );
   }
 
-  const durationSeconds: 5 | 10 = body.durationSeconds === 10 ? 10 : 5;
+  const durationSeconds: 5 | 10 | 15 =
+    body.durationSeconds === 15 ? 15 : body.durationSeconds === 10 ? 10 : 5;
   const settings: TransformationSettings = { persona: body.personaId };
   const cost = computeStoryVideoCost(durationSeconds);
 

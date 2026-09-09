@@ -7,14 +7,10 @@ import type {
 
 const QUEUE_BASE = "https://queue.fal.run";
 const SUBMIT_ENDPOINT_ID = "fal-ai/kling-video/o1/video-to-video/edit";
-// Kling V2.6 Pro text-to-video — supports native audio/dialogue generation,
-// which is what makes a "talking fruit" video actually talk. Verified
-// against fal's live API docs on 2026-09-03.
-const TEXT_TO_VIDEO_ENDPOINT_ID = "fal-ai/kling-video/v2.6/pro/text-to-video";
-// Same model family, but seeded with a user's uploaded photo as the first
-// frame — used when the story flow includes a photo of themselves. Verified
-// against fal's live API docs on 2026-09-03.
-const IMAGE_TO_VIDEO_ENDPOINT_ID = "fal-ai/kling-video/v2.6/pro/image-to-video";
+// Kling V3 Pro text-to-video — supports native audio/dialogue, 3-15s duration.
+const TEXT_TO_VIDEO_ENDPOINT_ID = "fal-ai/kling-video/v3/pro/text-to-video";
+// Same model family, seeded with a user's uploaded photo as the first frame.
+const IMAGE_TO_VIDEO_ENDPOINT_ID = "fal-ai/kling-video/v3/pro/image-to-video";
 // Fal's queue routes status/result/cancel under the app's base path, not the
 // full submit endpoint — confirmed against the live API on 2026-08-01
 // (GET .../kling-video/o1/video-to-video/edit/requests/{id}/status returns
@@ -42,9 +38,8 @@ interface FalVideoOutput {
 /**
  * Kling, run via fal.ai's queue API. Spans two models depending on whether
  * a source video is supplied: with one, Kling O1 Edit does video-to-video
- * restyling; without one, Kling V2.6 Pro generates a video from text alone
- * (with native audio/dialogue). Verified against the live API docs on
- * 2026-08-01 (O1 Edit) and 2026-09-03 (V2.6 Pro text-to-video).
+ * restyling; without one, Kling V3 Pro generates a video from text alone
+ * (with native audio/dialogue, 3-15s duration).
  * Output is { video: { url, ... } } for both.
  *
  * Source video constraints from the model itself: .mp4/.mov only,
@@ -64,7 +59,7 @@ export const falProvider: VideoGenerationProvider = {
         body: JSON.stringify({
           prompt: input.prompt,
           start_image_url: input.startImageUrl,
-          duration: input.durationSeconds === 10 ? "10" : "5",
+          duration: String(input.durationSeconds ?? 5),
           generate_audio: true,
         }),
       });
@@ -86,7 +81,7 @@ export const falProvider: VideoGenerationProvider = {
         headers: authHeaders(),
         body: JSON.stringify({
           prompt: input.prompt,
-          duration: input.durationSeconds === 10 ? "10" : "5",
+          duration: String(input.durationSeconds ?? 5),
           aspect_ratio: input.aspectRatio ?? "9:16",
           generate_audio: true,
         }),

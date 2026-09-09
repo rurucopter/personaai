@@ -22,7 +22,7 @@ interface CreationWizardProps {
 export function CreationWizard({ creditBalance }: CreationWizardProps) {
   const [step, setStep] = useState(1);
   const [story, setStory] = useState("");
-  const [durationSeconds, setDurationSeconds] = useState<5 | 10>(5);
+  const [durationSeconds, setDurationSeconds] = useState<5 | 10 | 15>(5);
   const [personaId, setPersonaId] = useState<string | null>(null);
   const [photoPath, setPhotoPath] = useState<string | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
