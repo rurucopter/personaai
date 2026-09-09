@@ -7,27 +7,37 @@ export interface AvatarTemplate {
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 
+const FRUIT_STYLE =
+  "Premium 3D animated character in the style of a Pixar or DreamWorks film — polished, cinematic, richly detailed. The character has a human body with realistic proportions, human-like expressive eyes, nose, and mouth, but the entire skin of the face and head has the color and texture of the fruit (not a mask — the skin IS the fruit). The character can have human hair. Clothing adapts to the story context. Environment is detailed and matches the scene. Dramatic cinematic lighting, professional 3D animation quality. Expressive, full of personality and attitude. Completely original character design, not based on any existing franchise or creator's series.";
+
 export const AVATAR_TEMPLATES: AvatarTemplate[] = [
   {
     id: "talking-banana",
     name: "Banane Rigolote",
     description:
-      "Hyper-realistic 3D render of a muscular human body with a bright yellow banana-shaped head replacing the normal head — the banana skin has realistic fruit texture, with bold expressive cartoon eyes and mouth carved into the fruit surface. Strong athletic build, wearing contextual everyday clothing appropriate to the scene. Highly detailed textures on skin, clothes and environment, dramatic cinematic lighting, photorealistic 3D render quality like a AAA video game cutscene. The character looks tough, confident and full of attitude. Completely original character, not based on any existing franchise.",
+      `A character with bright yellow banana-textured skin covering their entire head and face, with a slightly elongated head shape. Human eyes, nose, and mouth visible through the yellow fruit-textured skin. Strong muscular build. ${FRUIT_STYLE}`,
     imageUrl: `${SUPABASE_URL}/storage/v1/object/public/avatar-templates/talking-banana.jpg`,
   },
   {
     id: "talking-strawberry",
     name: "Fraise Complice",
     description:
-      "Hyper-realistic 3D render of a muscular human body with a bright red strawberry-shaped head replacing the normal head — the strawberry skin has realistic fruit texture with visible seeds, with bold expressive cartoon eyes and mouth carved into the fruit surface, small green leaves on top. Strong athletic build, wearing contextual everyday clothing appropriate to the scene. Highly detailed textures on skin, clothes and environment, dramatic cinematic lighting, photorealistic 3D render quality like a AAA video game cutscene. The character looks tough, confident and full of attitude. Completely original character, not based on any existing franchise.",
+      `A character with bright red strawberry-textured skin with visible seeds covering their entire head and face, small green leaves sprouting from the top of the head. Human eyes, nose, and mouth visible through the red fruit-textured skin. Can have human hair alongside the fruit texture. ${FRUIT_STYLE}`,
     imageUrl: `${SUPABASE_URL}/storage/v1/object/public/avatar-templates/talking-strawberry.jpg`,
   },
   {
     id: "talking-watermelon",
     name: "Pastèque Complice",
     description:
-      "Hyper-realistic 3D render of a muscular human body with a round pink-and-green watermelon-shaped head replacing the normal head — the watermelon skin has realistic fruit texture with dark green stripes, with bold expressive cartoon eyes and mouth carved into the fruit surface. Strong athletic build, wearing contextual everyday clothing appropriate to the scene. Highly detailed textures on skin, clothes and environment, dramatic cinematic lighting, photorealistic 3D render quality like a AAA video game cutscene. The character looks tough, confident and full of attitude. Completely original character, not based on any existing franchise.",
+      `A character with green watermelon-textured skin with dark stripes covering their entire head and face, a round head shape. Human eyes, nose, and mouth visible through the green fruit-textured skin. Strong muscular build. ${FRUIT_STYLE}`,
     imageUrl: `${SUPABASE_URL}/storage/v1/object/public/avatar-templates/talking-watermelon.jpg`,
+  },
+  {
+    id: "talking-coconut",
+    name: "Coco Tranquille",
+    description:
+      `A character with brown coconut-textured skin covering their entire head and face, with a small palm tree leaf sprouting from the top. Human eyes, nose, and mouth visible through the brown fruit-textured skin. Relaxed, chill attitude. ${FRUIT_STYLE}`,
+    imageUrl: `${SUPABASE_URL}/storage/v1/object/public/avatar-templates/talking-coconut.jpg`,
   },
 ];
 
