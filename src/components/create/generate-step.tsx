@@ -1,6 +1,7 @@
 "use client";
 
-import { Loader2, Sparkles } from "lucide-react";
+import Link from "next/link";
+import { AlertTriangle, Loader2, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { getPersonaById } from "@/lib/personas";
@@ -48,9 +49,20 @@ export function GenerateStep({
       </div>
 
       {insufficientCredits && (
-        <p className="text-sm text-destructive">
-          Crédits insuffisants pour cette génération.
-        </p>
+        <Link
+          href="/dashboard/billing"
+          className="flex items-center gap-3 rounded-xl border border-destructive/30 bg-destructive/10 p-4 transition-colors hover:bg-destructive/15"
+        >
+          <AlertTriangle className="size-5 shrink-0 text-destructive" />
+          <div>
+            <p className="text-sm font-semibold text-destructive">
+              Crédits insuffisants
+            </p>
+            <p className="text-xs text-destructive/80">
+              Vous avez {creditBalance} crédit{creditBalance !== 1 ? "s" : ""}, il en faut {cost}. Changez de forfait pour continuer.
+            </p>
+          </div>
+        </Link>
       )}
       {error && <p className="text-sm text-destructive">{error}</p>}
 

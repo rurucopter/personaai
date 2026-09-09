@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, Coins, Gift, Sparkles, Video as VideoIcon } from "lucide-react";
+import { AlertTriangle, ArrowRight, Coins, Gift, Sparkles, Video as VideoIcon } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { Button } from "@/components/ui/button";
 import { VideoCard } from "@/components/videos/video-card";
@@ -60,6 +60,28 @@ export default async function DashboardHomePage() {
         <h1 className="text-2xl font-semibold tracking-tight">Accueil</h1>
         <p className="text-muted-foreground">Bienvenue sur votre espace PersonaAI.</p>
       </div>
+
+      {(credits?.balance ?? 0) <= 2 && (
+        <Link
+          href="/dashboard/billing"
+          className="flex items-center gap-3 rounded-xl border border-destructive/30 bg-destructive/10 p-4 transition-colors hover:bg-destructive/15"
+        >
+          <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-destructive/15 text-destructive">
+            <AlertTriangle className="size-5" />
+          </div>
+          <div className="flex-1">
+            <p className="text-sm font-semibold text-destructive">
+              {(credits?.balance ?? 0) === 0
+                ? "Plus de crédits !"
+                : `Plus que ${credits?.balance} crédit${(credits?.balance ?? 0) > 1 ? "s" : ""}`}
+            </p>
+            <p className="text-xs text-destructive/80">
+              Passez à un forfait supérieur pour continuer à générer des vidéos.
+            </p>
+          </div>
+          <ArrowRight className="size-4 shrink-0 text-destructive" />
+        </Link>
+      )}
 
       <div className="grid gap-4 sm:grid-cols-3">
         {stats.map((stat) => (

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { signOut } from "@/lib/auth/actions";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { DashboardMobileNav } from "@/components/dashboard/mobile-nav";
@@ -11,7 +12,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { LogOut } from "lucide-react";
+import { AlertTriangle, LogOut } from "lucide-react";
+
+const LOW_CREDIT_THRESHOLD = 2;
 
 interface DashboardTopbarProps {
   email: string;
@@ -32,11 +35,24 @@ export function DashboardTopbar({
     <header className="flex h-16 items-center justify-between border-b border-border px-6">
       <DashboardMobileNav />
       <div className="flex items-center gap-3">
+        {creditBalance <= LOW_CREDIT_THRESHOLD && (
+          <Link
+            href="/dashboard/billing"
+            className="flex items-center gap-1.5 rounded-full border border-destructive/30 bg-destructive/10 px-3 py-1 text-xs font-medium text-destructive transition-colors hover:bg-destructive/20"
+          >
+            <AlertTriangle className="size-3" />
+            Crédits bas — recharger
+          </Link>
+        )}
         <Badge
           variant="secondary"
-          className="border-primary/25 bg-primary/10 font-medium text-primary"
+          className={
+            creditBalance <= LOW_CREDIT_THRESHOLD
+              ? "border-destructive/30 bg-destructive/10 font-medium text-destructive"
+              : "border-primary/25 bg-primary/10 font-medium text-primary"
+          }
         >
-          {creditBalance} crédits
+          {creditBalance} crédit{creditBalance !== 1 ? "s" : ""}
         </Badge>
         <ThemeToggle />
         <DropdownMenu>
