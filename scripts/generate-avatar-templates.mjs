@@ -41,23 +41,23 @@ const ORDINARY_PERSON_SUFFIX =
 // toward a generic, original design so we never reproduce an existing
 // copyrighted/trademarked character or a specific creator's series.
 const FRUIT_PERSON_SUFFIX =
-  "Full human body with elegant, graceful proportions, wearing tasteful, modest tropical summer resort wear. Tropical beach setting at golden hour, palm trees, warm sunset lighting. Polished 3D animated movie render, Pixar/Disney-style character design, wholesome. Completely original character design, not based on any existing movie, show, game, franchise, or online creator's series.";
+  "Muscular athletic human body, strong confident posture, wearing gritty contextual work clothing (hi-vis vest, hard hat, boots). Standing on a construction site with cranes, scaffolding, concrete. Hyper-realistic 3D render quality like a AAA video game cutscene — detailed textures on skin, dirty clothes, dusty environment, dramatic cinematic lighting. Tough street attitude, intense expression. Completely original character design, not based on any existing movie, show, game, franchise, or online creator's series.";
 
 const TEMPLATES = [
   {
     id: "talking-banana",
     prompt:
-      `An original 3D animated humanoid character with a stylized banana-shaped head (elegant cartoon face, big expressive eyes with lashes, warm smile) atop a normal human body, bright yellow head color. ${FRUIT_PERSON_SUFFIX}`,
+      `Hyper-realistic 3D render of a muscular man with a bright yellow banana-shaped head replacing his normal head — realistic fruit skin texture, bold expressive angry eyes and mouth carved into the fruit surface. ${FRUIT_PERSON_SUFFIX}`,
   },
   {
     id: "talking-strawberry",
     prompt:
-      `An original 3D animated humanoid character with a stylized strawberry-shaped head (elegant cartoon face, big expressive eyes with lashes, warm smile, small green leaf tuft on top) atop a normal human body, bright red head color with small seed dots. ${FRUIT_PERSON_SUFFIX}`,
+      `Hyper-realistic 3D render of a muscular man with a bright red strawberry-shaped head replacing his normal head — realistic fruit skin texture with visible seeds, bold expressive eyes and mouth carved into the fruit surface, small green leaves on top. ${FRUIT_PERSON_SUFFIX}`,
   },
   {
     id: "talking-watermelon",
     prompt:
-      `An original 3D animated humanoid character with a stylized watermelon-shaped head (elegant cartoon face, big expressive eyes with lashes, wide happy smile) atop a normal human body, bright pink and green head color with small black seeds. ${FRUIT_PERSON_SUFFIX}`,
+      `Hyper-realistic 3D render of a muscular man with a round pink-and-green watermelon-shaped head replacing his normal head — realistic fruit skin texture with dark green stripes, bold expressive eyes and mouth carved into the fruit surface. ${FRUIT_PERSON_SUFFIX}`,
   },
   {
     id: "blonde-lifestyle",
