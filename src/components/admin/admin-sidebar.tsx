@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import {
   BarChart3,
   CreditCard,
+  Globe,
   LayoutDashboard,
   LineChart,
   Users,
@@ -19,8 +20,9 @@ export interface AdminNavItem {
 }
 
 export const ADMIN_NAV_ITEMS: AdminNavItem[] = [
-  { href: "/admin", label: "Statistiques", icon: BarChart3 },
+  { href: "/admin", label: "Dashboard", icon: BarChart3 },
   { href: "/admin/analytics", label: "Analytics", icon: LineChart },
+  { href: "/admin/traffic", label: "Trafic", icon: Globe },
   { href: "/admin/users", label: "Utilisateurs", icon: Users },
   { href: "/admin/subscriptions", label: "Abonnements", icon: CreditCard },
 ];

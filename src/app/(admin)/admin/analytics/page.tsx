@@ -50,7 +50,16 @@ export default async function AdminAnalyticsPage() {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle>Inscriptions (30 derniers jours)</CardTitle>
+            <CardTitle>Visiteurs uniques (30j)</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <BarChart data={data.visitorsByDay} color="var(--chart-3)" />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Inscriptions (30j)</CardTitle>
           </CardHeader>
           <CardContent>
             <BarChart data={data.signupsByDay} />
@@ -59,7 +68,7 @@ export default async function AdminAnalyticsPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Revenu (30 derniers jours)</CardTitle>
+            <CardTitle>Revenu (30j)</CardTitle>
           </CardHeader>
           <CardContent>
             <BarChart data={data.revenueByDay} formatValue={(v) => `${v.toFixed(2)} €`} />
@@ -68,34 +77,10 @@ export default async function AdminAnalyticsPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Vidéos générées (30 derniers jours)</CardTitle>
+            <CardTitle>Vidéos générées (30j)</CardTitle>
           </CardHeader>
           <CardContent>
             <BarChart data={data.videosByDay} color="var(--chart-2)" />
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Crédits</CardTitle>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-2 text-sm">
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Attribués / achetés</span>
-              <span className="font-medium">{data.credits.totalGrantedOrPurchased}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Dépensés en génération</span>
-              <span className="font-medium">{data.credits.totalSpent}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Remboursés</span>
-              <span className="font-medium">{data.credits.totalRefunded}</span>
-            </div>
-            <div className="flex justify-between border-t border-border pt-2">
-              <span className="text-muted-foreground">Solde total en circulation</span>
-              <span className="font-medium">{data.credits.outstandingBalance}</span>
-            </div>
           </CardContent>
         </Card>
       </div>
@@ -163,6 +148,30 @@ export default async function AdminAnalyticsPage() {
 
         <Card>
           <CardHeader>
+            <CardTitle>Crédits</CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-2 text-sm">
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Attribués / achetés</span>
+              <span className="font-medium">{data.credits.totalGrantedOrPurchased}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Dépensés en génération</span>
+              <span className="font-medium">{data.credits.totalSpent}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Remboursés</span>
+              <span className="font-medium">{data.credits.totalRefunded}</span>
+            </div>
+            <div className="flex justify-between border-t border-border pt-2">
+              <span className="text-muted-foreground">Solde total en circulation</span>
+              <span className="font-medium">{data.credits.outstandingBalance}</span>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
             <CardTitle>Meilleurs parrains</CardTitle>
           </CardHeader>
           <CardContent>
@@ -213,6 +222,64 @@ export default async function AdminAnalyticsPage() {
                         {new Date(u.createdAt).toLocaleDateString("fr-FR")}
                       </td>
                       <td className="py-2">{u.referredBy ? "Oui" : "—"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Pages les plus visitées</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {data.topPages.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Pas encore de données.</p>
+            ) : (
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border text-left text-muted-foreground">
+                    <th className="pb-2 font-medium">Page</th>
+                    <th className="pb-2 font-medium">Vues</th>
+                    <th className="pb-2 font-medium">Visiteurs</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {data.topPages.map((p) => (
+                    <tr key={p.path} className="border-b border-border last:border-0">
+                      <td className="py-2 font-mono text-xs">{p.path}</td>
+                      <td className="py-2">{p.views}</td>
+                      <td className="py-2">{p.uniqueVisitors}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Sources de trafic</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {data.topReferrers2.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Pas encore de données.</p>
+            ) : (
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border text-left text-muted-foreground">
+                    <th className="pb-2 font-medium">Source</th>
+                    <th className="pb-2 font-medium">Visites</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {data.topReferrers2.map((r) => (
+                    <tr key={r.referrer} className="border-b border-border last:border-0">
+                      <td className="py-2">{r.referrer}</td>
+                      <td className="py-2">{r.count}</td>
                     </tr>
                   ))}
                 </tbody>

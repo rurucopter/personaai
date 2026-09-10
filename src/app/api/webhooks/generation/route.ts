@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { postprocessResultVideo } from "@/lib/video-postprocess";
+import { generateFrenchVoiceover } from "@/lib/ai/tts";
 import { isValidWebhookSecret } from "@/lib/webhooks";
 import { failVideoAndRefund } from "@/lib/generation-finalize";
 import { readJson } from "@/lib/http";
@@ -92,7 +93,16 @@ export async function POST(request: Request) {
     return NextResponse.json({ success: true });
   }
 
-  const resultVideoUrl = await postprocessResultVideo(providerVideoUrl, video.id);
+  let voiceoverAudio: Buffer | undefined;
+  if (video.story) {
+    try {
+      voiceoverAudio = await generateFrenchVoiceover(video.story);
+    } catch (err) {
+      console.error("French TTS failed, continuing without voice-over:", err);
+    }
+  }
+
+  const resultVideoUrl = await postprocessResultVideo(providerVideoUrl, video.id, voiceoverAudio);
 
   await supabase
     .from("videos")

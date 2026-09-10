@@ -73,15 +73,112 @@ export async function addFilmGrain(videoBuffer: Buffer): Promise<Buffer> {
 }
 
 /**
- * Downloads the provider's result video, adds film grain, and re-hosts it
- * in our own "result-videos" bucket. Returns the new public URL, or the
- * original URL unchanged if anything in the pipeline fails — grain is a
- * quality enhancement, not something that should ever block a completed
- * generation from reaching the user.
+ * Merges a TTS voice-over audio track into a video file using ffmpeg.
+ * The audio is trimmed/padded to match the video duration. Any existing
+ * audio in the video is replaced.
+ */
+export async function mergeVoiceover(
+  videoBuffer: Buffer,
+  audioBuffer: Buffer
+): Promise<Buffer> {
+  const dir = await mkdtemp(join(tmpdir(), "personaai-vo-"));
+  const videoPath = join(dir, "video.mp4");
+  const audioPath = join(dir, "voiceover.wav");
+  const outputPath = join(dir, "merged.mp4");
+
+  try {
+    await writeFile(videoPath, videoBuffer);
+    await writeFile(audioPath, audioBuffer);
+
+    await new Promise<void>((resolve, reject) => {
+      const proc = spawn(ffmpegPath as string, [
+        "-y",
+        "-i", videoPath,
+        "-i", audioPath,
+        "-filter_complex",
+        "[1:a]apad[vo];[0:a][vo]amix=inputs=2:duration=first:dropout_transition=0[aout]",
+        "-map", "0:v",
+        "-map", "[aout]",
+        "-c:v", "copy",
+        "-c:a", "aac",
+        "-b:a", "192k",
+        "-shortest",
+        outputPath,
+      ]);
+
+      let stderr = "";
+      proc.stderr.on("data", (d) => (stderr += d.toString()));
+      proc.on("error", reject);
+      proc.on("close", (code) => {
+        if (code === 0) resolve();
+        else reject(new Error(`ffmpeg merge failed (code ${code}): ${stderr.slice(-500)}`));
+      });
+    });
+
+    return await readFile(outputPath);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+}
+
+/**
+ * Simpler fallback: replaces any existing audio with the TTS track.
+ * Used when the source video has no audio stream to mix with.
+ */
+async function replaceAudio(
+  videoBuffer: Buffer,
+  audioBuffer: Buffer
+): Promise<Buffer> {
+  const dir = await mkdtemp(join(tmpdir(), "personaai-vo-"));
+  const videoPath = join(dir, "video.mp4");
+  const audioPath = join(dir, "voiceover.wav");
+  const outputPath = join(dir, "merged.mp4");
+
+  try {
+    await writeFile(videoPath, videoBuffer);
+    await writeFile(audioPath, audioBuffer);
+
+    await new Promise<void>((resolve, reject) => {
+      const proc = spawn(ffmpegPath as string, [
+        "-y",
+        "-i", videoPath,
+        "-i", audioPath,
+        "-map", "0:v",
+        "-map", "1:a",
+        "-c:v", "copy",
+        "-c:a", "aac",
+        "-b:a", "192k",
+        "-shortest",
+        outputPath,
+      ]);
+
+      let stderr = "";
+      proc.stderr.on("data", (d) => (stderr += d.toString()));
+      proc.on("error", reject);
+      proc.on("close", (code) => {
+        if (code === 0) resolve();
+        else reject(new Error(`ffmpeg replace-audio failed (code ${code}): ${stderr.slice(-500)}`));
+      });
+    });
+
+    return await readFile(outputPath);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+}
+
+/**
+ * Downloads the provider's result video, adds film grain, optionally merges
+ * a French voice-over, and re-hosts it in our own "result-videos" bucket.
+ * Returns the new public URL, or the original URL unchanged if anything in
+ * the pipeline fails — post-processing is a quality enhancement, not
+ * something that should ever block a completed generation from reaching
+ * the user.
  */
 export async function postprocessResultVideo(
   providerVideoUrl: string,
-  videoId: string
+  videoId: string,
+  voiceoverAudio?: Buffer
 ): Promise<string> {
   try {
     const res = await fetch(providerVideoUrl);
@@ -90,11 +187,18 @@ export async function postprocessResultVideo(
     const original = Buffer.from(await res.arrayBuffer());
     const grainy = await addFilmGrain(original);
 
+    const final = voiceoverAudio
+      ? await replaceAudio(grainy, voiceoverAudio).catch((err) => {
+          console.error("Voice-over merge failed, using video without VO:", err);
+          return grainy;
+        })
+      : grainy;
+
     const supabase = createServiceRoleClient();
     const path = `${videoId}.mp4`;
     const { error: uploadError } = await supabase.storage
       .from("result-videos")
-      .upload(path, grainy, { contentType: "video/mp4", upsert: true });
+      .upload(path, final, { contentType: "video/mp4", upsert: true });
 
     if (uploadError) throw uploadError;
 
@@ -104,7 +208,7 @@ export async function postprocessResultVideo(
 
     return publicUrl;
   } catch (err) {
-    console.error("Grain post-processing failed, using original video:", err);
+    console.error("Post-processing failed, using original video:", err);
     return providerVideoUrl;
   }
 }

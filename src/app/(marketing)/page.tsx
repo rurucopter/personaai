@@ -1,17 +1,25 @@
 import { Hero } from "@/components/marketing/hero";
-import { Showcase } from "@/components/marketing/showcase";
+import { SocialProof } from "@/components/marketing/social-proof";
+import { HowItWorks } from "@/components/marketing/how-it-works";
+import { Features } from "@/components/marketing/features";
+import { Testimonials } from "@/components/marketing/testimonials";
+import { UseCases } from "@/components/marketing/use-cases";
 import { Pricing } from "@/components/marketing/pricing";
-import { ReferralPromo } from "@/components/marketing/referral-promo";
 import { FAQ } from "@/components/marketing/faq";
+import { FinalCTA } from "@/components/marketing/final-cta";
 
 export default function HomePage() {
   return (
     <>
       <Hero />
-      <Showcase />
+      <SocialProof />
+      <HowItWorks />
+      <Features />
+      <Testimonials />
+      <UseCases />
       <Pricing />
-      <ReferralPromo />
       <FAQ />
+      <FinalCTA />
     </>
   );
 }

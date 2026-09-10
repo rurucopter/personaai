@@ -60,7 +60,7 @@ export const falProvider: VideoGenerationProvider = {
           prompt: input.prompt,
           start_image_url: input.startImageUrl,
           duration: String(input.durationSeconds ?? 5),
-          generate_audio: true,
+          generate_audio: false,
         }),
       });
 
@@ -83,7 +83,7 @@ export const falProvider: VideoGenerationProvider = {
           prompt: input.prompt,
           duration: String(input.durationSeconds ?? 5),
           aspect_ratio: input.aspectRatio ?? "9:16",
-          generate_audio: true,
+          generate_audio: false,
         }),
       });
 

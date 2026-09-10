@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { ThemeProvider } from "@/components/theme-provider";
 import { PostHogProvider } from "@/components/posthog-provider";
 import { Toaster } from "@/components/ui/sonner";
+import { PageTracker } from "@/components/page-tracker";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -60,6 +61,7 @@ export default function RootLayout({
             disableTransitionOnChange
           >
             {children}
+            <PageTracker />
             <Toaster richColors position="top-center" />
           </ThemeProvider>
         </PostHogProvider>
